@@ -1,0 +1,48 @@
+<div class="page" id="page-historico">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div>
+      <h1>Gestión de Periodos</h1>
+      <p>Administra los años fiscales del SISCOP · UGEL 06 VITARTE</p>
+    </div>
+    <button class="btn btn-primary" id="btn-nuevo-periodo" onclick="abrirModalNuevoPeriodo()" style="display:none">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo periodo
+    </button>
+  </div>
+
+  <!-- Periodo activo destacado -->
+  <div id="hist-periodo-activo-card" style="display:none;margin-bottom:16px">
+    <div style="background:linear-gradient(135deg,#1B4FD8 0%,#3B82F6 100%);border-radius:var(--radius-lg);padding:18px 20px;color:#fff;box-shadow:0 4px 16px rgba(27,79,216,.35)">
+      <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-bottom:6px">Periodo activo</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:1.8rem;font-weight:800;line-height:1" id="hist-activo-anio">—</div>
+          <div style="font-size:.8rem;opacity:.8;margin-top:3px" id="hist-activo-nombre">—</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.62rem;opacity:.6;text-transform:uppercase;letter-spacing:.06em">Último corte</div>
+          <div style="font-family:var(--mono);font-size:.9rem;font-weight:600;margin-top:2px" id="hist-activo-corte">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton -->
+  <div id="hist-skeleton-periodos" style="display:none">
+    <div class="sk-card" style="height:80px;margin-bottom:8px"></div>
+    <div class="sk-card" style="height:80px;margin-bottom:8px"></div>
+    <div class="sk-card" style="height:80px"></div>
+  </div>
+
+  <!-- Lista de periodos -->
+  <div id="hist-periodos-lista" style="display:none">
+    <div class="section-label" style="margin-bottom:10px">Todos los periodos</div>
+    <div id="hist-periodos-grid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="hist-empty" class="alert alert-info" style="display:none">
+    <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    No hay periodos registrados. Crea el primero con el botón "Nuevo periodo".
+  </div>
+</div>

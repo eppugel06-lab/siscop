@@ -1,0 +1,513 @@
+<script>
+  /* ═══ PRECHECK HOJAS ═══ */
+  function verificarPrecheck() {
+    gasCall('verificarHojasPrecargadas', [], function (pc) {
+      S.precheck = pc;
+      ['sisplan', 'devengado', 'certificado'].forEach(function (k) {
+        if (pc[k] && pc[k].tieneData) {
+          S.filesLoaded[k] = true;
+          var badge = $('dz-' + k + '-preload');
+          if (badge) {
+            badge.style.display = 'block';
+            badge.innerHTML = '✓ ' + pc[k].filas + ' filas precargadas';
+            $('dz-' + k).classList.add('s-preload');
+          }
+        }
+      });
+      updateProcesarBtn();
+    }, null);
+  }
+
+  /* ═══ DRAG & DROP ═══ */
+  function dzOver(e, k) { e.preventDefault(); $('dz-' + k).classList.add('drag-over'); }
+  function dzLeave(e, k) { $('dz-' + k).classList.remove('drag-over'); }
+  function dzDrop(e, k) { e.preventDefault(); dzLeave(e, k); processFile(e.dataTransfer.files[0], k); }
+  function onFileSelect(e, k) {
+    var file = e.target.files[0];
+    if (file) {
+      processFile(file, k);
+      e.target.value = '';
+    }
+  }
+
+  function alCambiarMes() {
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    
+    // UI Updates
+    if (esPIA) {
+       if($('mes-select-wrap')) {
+         $('mes-select-wrap').style.opacity = '0.5';
+         $('mes-select-wrap').style.pointerEvents = 'none';
+         $('mes-select').value = '';
+         if($('mes-select-hint')) $('mes-select-hint').textContent = '— Inhabilitado (No requerido para PIA)';
+       }
+       if($('dz-certificado-sub')) $('dz-certificado-sub').textContent = 'No requerido para programación PIA';
+       if($('dz-devengado-sub')) $('dz-devengado-sub').textContent = 'Arrastra o haz clic · Sin validación de mes';
+    } else {
+       if($('mes-select-wrap')) {
+         $('mes-select-wrap').style.opacity = '1';
+         $('mes-select-wrap').style.pointerEvents = 'auto';
+         if($('mes-select-hint')) $('mes-select-hint').textContent = '— aplica a Devengado y Certificado';
+       }
+       if($('dz-certificado-sub')) $('dz-certificado-sub').textContent = 'Arrastra o haz clic · Requiere mes de corte';
+       if($('dz-devengado-sub')) $('dz-devengado-sub').textContent = 'Arrastra o haz clic · Requiere mes de corte';
+    }
+
+    updateProcesarBtn();
+    var mc = $('mes-select').value;
+    
+    // Clear validation alerts
+    if (mc !== '' || esPIA) {
+      if (S.filesNew.devengado) clearValAlert('devengado');
+      if (S.filesNew.certificado) clearValAlert('certificado');
+    }
+  }
+
+  function processFile(file, key) {
+    if (!file) return;
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    if (!esPIA && (key === 'devengado' || key === 'certificado') && $('mes-select').value === '') {
+      toast('Selecciona el mes de corte antes de cargar ' + key.toUpperCase(), 'warn');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      try {
+        var u8 = new Uint8Array(ev.target.result);
+        var wb = XLSX.read(u8, { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        
+        if (!data || data.length < 2) throw new Error('Archivo vacío o sin datos');
+        
+        var enc = data[0].map(function(h) { return String(h).trim().toUpperCase(); });
+        var requeridas = {
+          'SISPLAN': ['SEC_FUNC','CLASIFICADOR_CODIGO','CERT_ENE','DEVE_ENE'],
+          'DEVENGADO': ['SEC_FUNC','TIPO_TRANSACCION','MTO_DEVENGA_01'],
+          'CERTIFICADO': ['SEC_FUNC','CLASIFICADOR_CODIGO'] // Jerárquico se aplana atrás
+        }[key.toUpperCase()] || [];
+        
+        var missingCols = requeridas.filter(function(c) { return enc.indexOf(c) === -1; });
+        var lastMonthWithData = -1;
+        
+        if (key !== 'sisplan') {
+          var monthColIdxs = [];
+          if (key === 'devengado') {
+            for (var m=1;m<=12;m++) monthColIdxs.push(enc.indexOf('MTO_DEVENGA_'+(m<10?'0'+m:m)));
+          } else {
+            ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SET','OCT','NOV','DIC'].forEach(function(n) { monthColIdxs.push(enc.indexOf(n)); });
+          }
+          for (var r=1;r<data.length;r++) {
+            for (var m2=11;m2>=0;m2--) {
+              var ci = monthColIdxs[m2];
+              if (ci>=0 && Number(data[r][ci])>0 && m2>lastMonthWithData) lastMonthWithData = m2;
+            }
+          }
+        }
+        
+        if (missingCols.length > 0 && !(key==='certificado' && missingCols.includes('SEC_FUNC'))) {
+          setDZState(key, 'err', file.name, 'Columnas faltantes');
+          showValAlert(key, 'err', 'Columnas faltantes en ' + key.toUpperCase() + ': ' + missingCols.join(', '));
+          S.filesLoaded[key] = false; S.filesNew[key] = false;
+          updateProcesarBtn(); return;
+        }
+        
+        var mc = parseInt($('mes-select').value || '-1');
+        if (key !== 'sisplan' && mc >= 0 && lastMonthWithData > mc && lastMonthWithData !== -1) {
+          showValAlert(key, 'warn', 'Tiene datos hasta ' + MESES[lastMonthWithData] + '. El mes de corte es ' + MESES[mc] + ' (Se ignorarán).');
+        } else {
+          clearValAlert(key);
+        }
+        
+        S.filesData[key] = JSON.stringify(data);
+        setDZState(key, 'ok', file.name, (data.length - 1) + ' filas · Listo');
+        S.filesLoaded[key] = true; S.filesNew[key] = true;
+        updateProcesarBtn();
+      } catch(e) {
+        setDZState(key, 'err', file.name, 'Error al leer');
+        S.filesLoaded[key] = false; S.filesNew[key] = false;
+        updateProcesarBtn();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function setDZState(k, state, filename, sub) {
+    var dz = $('dz-' + k);
+    dz.className = 'drop-zone';
+    if (state === 'ok') dz.classList.add('s-ok');
+    else if (state === 'err') dz.classList.add('s-err');
+    else if (state === 'loading') dz.classList.add('s-loading');
+    $('dz-' + k + '-sub').textContent = sub || 'Arrastra o haz clic';
+    var fe = $('dz-' + k + '-file');
+    if (filename) { fe.style.display = 'block'; fe.textContent = filename; }
+    else fe.style.display = 'none';
+    if (state === 'ok' || state === 'err' || state === 'loading') $('dz-' + k + '-preload').style.display = 'none';
+  }
+
+  function showValAlert(k, type, msg) {
+    clearValAlert(k);
+    var c = $('validation-alerts');
+    var el = document.createElement('div');
+    el.id = 'valert-' + k; el.className = 'alert alert-' + type;
+    el.innerHTML = '<svg class="alert-ico" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>' + msg + '</span>';
+    c.appendChild(el);
+  }
+  function clearValAlert(k) { var el = $('valert-' + k); if (el) el.remove(); }
+
+  function updateProcesarBtn() {
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    var allReady = S.filesLoaded.sisplan && S.filesLoaded.devengado && (esPIA || S.filesLoaded.certificado);
+    var anyNew = S.filesNew.sisplan || S.filesNew.devengado || (esPIA ? false : S.filesNew.certificado);
+    var needsMes = !esPIA && (S.filesNew.devengado || S.filesNew.certificado) && $('mes-select').value === '';
+    
+    var btn = $('btn-procesar'), hint = $('procesar-hint');
+    btn.disabled = !(allReady && anyNew && !needsMes) || S.procesando;
+
+    if (esPIA) {
+       $('dz-certificado').style.opacity = '0.3';
+       $('dz-certificado').style.pointerEvents = 'none';
+       if (!allReady) hint.textContent = 'Faltan insumos (SISPLAN y DEVENGADO requeridos para PIA)';
+       else if (!anyNew) hint.textContent = 'Carga al menos un archivo para proyectar PIA';
+       else hint.textContent = 'Listo para proyectar PIA';
+    } else {
+       $('dz-certificado').style.opacity = '1';
+       $('dz-certificado').style.pointerEvents = 'auto';
+       if (!allReady) hint.textContent = 'Faltan insumos (carga o precarga requerida para los 3)';
+       else if (!anyNew) hint.textContent = 'Carga al menos un archivo nuevo para procesar';
+       else if (needsMes) hint.textContent = 'Selecciona el mes de corte para Devengado/Certificado';
+       else hint.textContent = 'Listo para procesar';
+    }
+  }
+
+  function resetUpload() {
+    S.filesLoaded = { sisplan: false, devengado: false, certificado: false };
+    S.filesData = { sisplan: null, devengado: null, certificado: null };
+    S.filesNew = { sisplan: false, devengado: false, certificado: false };
+    ['sisplan', 'devengado', 'certificado'].forEach(function (k) {
+      setDZState(k, '', '', '');
+      clearValAlert(k);
+      $('dz-' + k + '-preload').style.display = 'none';
+      $('dz-' + k).className = 'drop-zone';
+    });
+    $('validation-alerts').innerHTML = '';
+    $('log-panel').style.display = 'none';
+    $('resumen-final').style.display = 'none';
+    logClear(); S.processed = false;
+    verificarPrecheck();
+  }
+
+  /* ═══ MODAL CONFIRMAR PROCESAR ═══ */
+  function solicitarConfirmacion() {
+    if (S.procesando) return;
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    var mcVal = $('mes-select').value;
+    var mc = mcVal !== '' ? parseInt(mcVal, 10) : -1;
+    var necesitaMes = !esPIA && (S.filesNew.devengado || S.filesNew.certificado);
+    if (necesitaMes && mc < 0) {
+      toast('Selecciona el mes de corte antes de continuar', 'warn');
+      return;
+    }
+    var keys = esPIA ? ['sisplan', 'devengado'] : ['sisplan', 'devengado', 'certificado'];
+    var labels = { sisplan: 'SISPLAN · Programación Anual', devengado: 'DEVENGADO · Ejecución', certificado: 'CERTIFICADO · Ejecución' };
+    var html = '';
+    keys.forEach(function (k) {
+      var isNew = S.filesNew[k];
+      var cls = isNew ? 'nuevo' : 'preload';
+      var status = isNew ? 'Archivo nuevo cargado' : 'Datos precargados del sistema';
+      html += '<div class="insumo-summary-item ' + cls + '"><div class="is-dot ' + cls + '"></div><div style="flex:1"><div class="is-label">' + labels[k] + '</div><div class="is-sub">' + status + '</div></div></div>';
+    });
+    $('mp-insumos').innerHTML = html;
+    if (mc >= 0) {
+      $('mp-mes-nombre').textContent = MESES[mc] + ' ' + CY;
+      $('mp-mes-info').style.display = 'block';
+    } else {
+      $('mp-mes-info').style.display = 'none';
+    }
+    abrirModal('modal-procesar');
+  }
+
+  function confirmarProcesar() {
+    cerrarModal('modal-procesar');
+    ejecutarProceso();
+  }
+
+  /* ═══ PROCESO PRINCIPAL ═══ */
+  function ejecutarProceso() {
+    if (S.procesando) return;
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    var mcVal = $('mes-select').value;
+    if (!esPIA && (mcVal === '' || mcVal === null || mcVal === undefined)) {
+      toast('Debes seleccionar el mes de corte antes de procesar', 'warn');
+      S.procesando = false;
+      return;
+    }
+    S.procesando = true;
+    var mc = esPIA ? 11 : parseInt(mcVal, 10);
+    S.mesCorte = mc;
+    $('log-panel').style.display = 'block';
+    $('resumen-final').style.display = 'none';
+    logClear();
+    $('btn-procesar').disabled = true;
+    setLogProgress('Iniciando...');
+    setTitle('⏳ Procesando...');
+    logLine('Iniciando consolidación SISCOP · UGEL 06', 'info');
+    logLine('Mes de corte: ' + MESES[mc] + ' · Aplica a Devengado y Certificado', 'info');
+
+    var uploads = [];
+    if (S.filesNew.sisplan) uploads.push({ key: 'sisplan', target: 'SISPLAN', b64: S.filesData.sisplan });
+    if (S.filesNew.devengado) uploads.push({ key: 'devengado', target: 'DEVENGADO', b64: S.filesData.devengado });
+    if (S.filesNew.certificado) uploads.push({ key: 'certificado', target: 'CERTIFICADO', b64: S.filesData.certificado });
+
+    var total = uploads.length, done = 0;
+    function uploadNext() {
+      if (done >= total) { runConsolidado(); return; }
+      var u = uploads[done];
+      logLine('Subiendo ' + u.target + ' (Chunked)...', 'info');
+      gasCall('uploadAndSaveToSheet', [u.b64, u.target], function (r) {
+        done++;
+        logLine('✓ ' + u.target + ' — ' + r.rows + ' filas', 'ok');
+        setLogProgress(Math.round(done / total * 60) + '%');
+        uploadNext();
+      }, function (err) {
+        logLine('✗ Error subiendo ' + u.target + ': ' + err.message, 'err');
+        toast('Error: ' + err.message, 'err');
+        S.procesando = false; updateProcesarBtn(); setTitle('Cargar Insumos');
+      });
+    }
+
+    function runConsolidado() {
+      logLine('Ejecutando consolidación (puede tardar ~2 min)...', 'info');
+      setLogProgress('65%');
+      var tipo = esPIA ? 'PIA' : 'NORMAL';
+      gasCall('ejecutarConsolidado', [mc, tipo], function (result) {
+        if (!result || !result.ok) {
+          logLine('✗ Error en consolidación', 'err');
+          toast('Error en el proceso', 'err');
+          S.procesando = false; updateProcesarBtn(); setTitle('Cargar Insumos'); return;
+        }
+        result.etapas.forEach(function (e, i) {
+          logLine('✓ [' + Math.round((i + 1) / result.etapas.length * 35 + 65) + '%] ' + e.nombre + ' (' + e.duracion + 's)', 'ok');
+        });
+        setLogProgress('100% · ' + result.duracion + 's');
+        logLine('══ PROCESO COMPLETADO ══', 'ok');
+        $('res-ok').textContent = result.resumen.ok;
+        $('res-obs').textContent = result.resumen.observado;
+        $('res-add').textContent = result.resumen.agregar;
+        $('res-del').textContent = result.resumen.eliminar;
+        $('resumen-final').style.display = 'block';
+        $('sb-periodo').textContent = MESES[mc] + ' ' + CY;
+        S.procesando = false; S.processed = true;
+        S.filesNew = { sisplan: false, devengado: false, certificado: false };
+        S.resumen = null; // Limpiar caché para forzar recarga
+        toast('¡Proceso completado exitosamente!', 'ok', 5000);
+        setTitle('✓ Proceso completado');
+        loadMetaSelect();
+      }, function (err) {
+        logLine('✗ ' + err.message, 'err');
+        toast('Error: ' + err.message, 'err');
+        S.procesando = false; updateProcesarBtn(); setTitle('Cargar Insumos');
+      });
+    }
+    uploadNext();
+  }
+
+  /* ═══ SISPLAN ENRICHMENT ═══ */
+  var _sisplanFile = null;
+  var _sisplanWB = null; // workbook SheetJS en memoria
+
+  function sisplanOnFileSelected(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    _sisplanFile = file;
+    _sisplanWB = null;
+    $('sisplan-file-label').textContent = file.name;
+    $('btn-sisplan-enriquecer').disabled = false;
+    $('btn-sisplan-reset').style.display = '';
+    sisplanSetAlert('');
+    $('sisplan-result').style.display = 'none';
+  }
+
+  function sisplanReset() {
+    _sisplanFile = null;
+    _sisplanWB = null;
+    $('sisplan-file-input').value = '';
+    $('sisplan-file-label').textContent = 'Seleccionar plantilla .xlsx';
+    $('btn-sisplan-enriquecer').disabled = true;
+    $('btn-sisplan-reset').style.display = 'none';
+    $('sisplan-progress').style.display = 'none';
+    $('sisplan-result').style.display = 'none';
+    sisplanSetAlert('');
+  }
+
+  function sisplanSetAlert(msg, type) {
+    var el = $('sisplan-alert');
+    if (!msg) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    var icons = {
+      info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+      err: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+      ok: '<polyline points="20 6 9 17 4 12"/>'
+    };
+    type = type || 'info';
+    var cls = { info: 'alert-info', err: 'alert-err', ok: 'alert-ok' }[type] || 'alert-info';
+    el.innerHTML = '<div class="alert ' + cls + '"><svg class="alert-ico" viewBox="0 0 24 24">' + (icons[type] || icons.info) + '</svg><span>' + msg + '</span></div>';
+    el.style.display = '';
+  }
+
+  function sisplanEnriquecerPlantilla() {
+    if (!_sisplanFile) return;
+
+    // Verificar SheetJS disponible
+    if (typeof XLSX === 'undefined') {
+      sisplanSetAlert('Cargando librería SheetJS, por favor espera un momento e intenta de nuevo...', 'info');
+      return;
+    }
+
+    $('sisplan-progress').style.display = '';
+    $('sisplan-progress-txt').textContent = 'Obteniendo datos del consolidado...';
+    $('btn-sisplan-enriquecer').disabled = true;
+    sisplanSetAlert('');
+    $('sisplan-result').style.display = 'none';
+
+    // 1) Llamar a Apps Script para obtener el mapa de datos
+    gasCall('obtenerDatosParaSisplan', [], function (res) {
+      if (!res || !res.ok) {
+        sisplanSetAlert(res ? res.mensaje : 'Error al conectar con el servidor', 'err');
+        $('sisplan-progress').style.display = 'none';
+        $('btn-sisplan-enriquecer').disabled = false;
+        return;
+      }
+
+      $('sisplan-progress-txt').textContent = 'Leyendo archivo Excel...';
+
+      // 2) Leer el archivo con SheetJS en memoria del navegador
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array', cellStyles: true, bookVBA: true });
+          var wsName = wb.SheetNames[0];
+          var ws = wb.Sheets[wsName];
+
+          $('sisplan-progress-txt').textContent = 'Cruzando datos y rellenando columnas...';
+
+          // 3) Cruzar y rellenar
+          var resultado = _sisplanRellenar(ws, res.datos);
+
+          $('sisplan-progress-txt').textContent = 'Generando archivo para descarga...';
+
+          // 4) Descargar
+          var fecha = new Date();
+          var ts = fecha.getFullYear() + ('0' + (fecha.getMonth() + 1)).slice(-2) + ('0' + fecha.getDate()).slice(-2);
+          var nombreSalida = 'SISCOP_SISPLAN_Rellenada_' + ts + '.xlsx';
+          XLSX.writeFile(wb, nombreSalida);
+
+          $('sisplan-progress').style.display = 'none';
+          $('btn-sisplan-enriquecer').disabled = false;
+
+          var msgResult = '<div class="alert alert-ok"><svg class="alert-ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' +
+            '<div><strong>Archivo generado correctamente</strong><br>' +
+            '<span style="font-size:.75rem">Filas rellenadas: <strong>' + resultado.rellenadas + '</strong> · ' +
+            'Sin coincidencia: <strong>' + resultado.sinMatch + '</strong> · ' +
+            'Archivo: <strong>' + nombreSalida + '</strong></span></div></div>';
+          $('sisplan-result').innerHTML = msgResult;
+          $('sisplan-result').style.display = '';
+
+          if (resultado.sinMatch > 0) {
+            sisplanSetAlert(resultado.sinMatch + ' fila(s) no tuvieron coincidencia en el CONSOLIDADO. Verifica SEC_FUNC y CLASIFICADOR_CODIGO.', 'info');
+          }
+
+        } catch (err) {
+          $('sisplan-progress').style.display = 'none';
+          $('btn-sisplan-enriquecer').disabled = false;
+          sisplanSetAlert('Error al procesar el archivo: ' + err.message, 'err');
+        }
+      };
+      reader.onerror = function () {
+        $('sisplan-progress').style.display = 'none';
+        $('btn-sisplan-enriquecer').disabled = false;
+        sisplanSetAlert('Error al leer el archivo. Intenta de nuevo.', 'err');
+      };
+      reader.readAsArrayBuffer(_sisplanFile);
+
+    }, function (err) {
+      $('sisplan-progress').style.display = 'none';
+      $('btn-sisplan-enriquecer').disabled = false;
+      sisplanSetAlert('Error del servidor: ' + err.message, 'err');
+    });
+  }
+
+  function _normClas(v) {
+    return String(v || '').replace(/\s+/g, '').toUpperCase();
+  }
+  function _normSF(v) {
+    var s = String(v || '').trim();
+    // Quitar ceros a la izquierda y reformatear a 4 dígitos
+    var n = parseInt(s.replace(/\D/g, ''), 10);
+    if (isNaN(n)) return s;
+    return ('0000' + n).slice(-4);
+  }
+
+  // Columnas objetivo en el Excel plantilla (0-based, fila 1 = índice 0 de encabezado)
+  var SISPLAN_COLS = {
+    SF: 4,  // SEC_FUNC     (col E, índice 4)
+    CL: 10, // CLASIFICADOR_CODIGO (col K, índice 10)
+    // Grupos de datos a rellenar (cols 27-78 = índice 0-based)
+    CERT_START: 27, // CERT_ENE
+    DEVE_START: 40, // DEVE_ENE
+    EJE_CERT_START: 53, // EJE_CERT_ENE
+    EJE_DEVE_START: 66  // EJE_DEVE_ENE
+  };
+
+  function _sisplanRellenar(ws, datosMap) {
+    var rellenadas = 0, sinMatch = 0;
+
+    // Determinar rango de filas
+    var ref = ws['!ref'];
+    var range = XLSX.utils.decode_range(ref);
+    var maxRow = range.e.r; // última fila (0-based)
+
+    // Recorrer desde fila 2 (índice 1, ya que 0 es encabezado)
+    for (var r = 1; r <= maxRow; r++) {
+      var sfCell = ws[XLSX.utils.encode_cell({ r: r, c: SISPLAN_COLS.SF })];
+      var clCell = ws[XLSX.utils.encode_cell({ r: r, c: SISPLAN_COLS.CL })];
+
+      if (!sfCell && !clCell) continue; // fila vacía
+
+      var sf = _normSF(sfCell ? sfCell.v : '');
+      var cl = _normClas(clCell ? clCell.v : '');
+      var key = sf + '|' + cl;
+
+      var datos = datosMap[key];
+      if (!datos) {
+        sinMatch++;
+        continue;
+      }
+
+      rellenadas++;
+      var grupos = [
+        { start: SISPLAN_COLS.CERT_START, vals: datos.cert, total: datos.certTotal },
+        { start: SISPLAN_COLS.DEVE_START, vals: datos.deve, total: datos.deveTotal },
+        { start: SISPLAN_COLS.EJE_CERT_START, vals: datos.ejeCert, total: datos.ejeCertTotal },
+        { start: SISPLAN_COLS.EJE_DEVE_START, vals: datos.ejeDeve, total: datos.ejeDeveTotal }
+      ];
+
+      grupos.forEach(function (g) {
+        // 12 meses
+        for (var m = 0; m < 12; m++) {
+          var addr = XLSX.utils.encode_cell({ r: r, c: g.start + m });
+          var v = Number(g.vals[m]) || 0;
+          if (!ws[addr]) ws[addr] = {};
+          ws[addr].v = v;
+          ws[addr].t = 'n';
+        }
+        // Total (col 13 del grupo)
+        var addrTot = XLSX.utils.encode_cell({ r: r, c: g.start + 12 });
+        if (!ws[addrTot]) ws[addrTot] = {};
+        ws[addrTot].v = Number(g.total) || 0;
+        ws[addrTot].t = 'n';
+      });
+    }
+
+    return { rellenadas: rellenadas, sinMatch: sinMatch };
+  }
+</script>

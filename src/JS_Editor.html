@@ -1,0 +1,248 @@
+<script>
+/* ========================================================================
+  JS: EDITOR DE PROGRAMACIÓN FINANCIERA
+  ========================================================================
+  Responsabilidad: Lógica del recálculo matemático de saldos, 
+  distribución de cuotas mensuales y control de la interfaz 
+  del modal de edición (checkboxes de meses activos/inactivos).
+  ======================================================================== 
+*/
+
+var _epClasifCode = null;
+var _epCantEdit = [];
+
+// ─── 1. Motor Matemático (Réplica del Backend) ───
+function obtenerMesCorteActivo() {
+  if (typeof _periodoActivo !== 'undefined' && _periodoActivo && _periodoActivo.mesCorte >= 0) {
+    return parseInt(_periodoActivo.mesCorte, 10);
+  }
+  if (S.mesCorte !== null && S.mesCorte !== undefined && S.mesCorte >= 0) {
+    return parseInt(S.mesCorte, 10);
+  }
+  return -1;
+}
+
+function _calcGenericoJS(pim, cant, eje, _totEjeIgnorado, mesCorte, tipo){
+  var res = new Array(12).fill(0);
+  var obs = '';
+  var ejeAcum = 0;
+  
+  // 1. MESES EJECUTADOS (Bloqueo absoluto)
+  for (var m = 0; m <= mesCorte; m++){
+    var v = Number(eje[m]) || 0;
+    res[m] = v;
+    ejeAcum += v;
+  }
+  
+  // 2. SALDO A DISTRIBUIR
+  var saldo = Math.round((pim - ejeAcum) * 100) / 100;
+  if (saldo < 0) saldo = 0;
+  
+  // 3. MESES FUTUROS ACTIVOS
+  var mAct = [];
+  for (var m2 = mesCorte + 1; m2 < 12; m2++){
+    if (cant[m2] > 0) mAct.push(m2);
+  }
+  var n = mAct.length;
+  
+  // 4. DISTRIBUCIÓN
+  if (n > 0 && saldo > 0){
+    var cuota = Math.floor((saldo / n) * 100) / 100;
+    for (var k = 0; k < n - 1; k++) res[mAct[k]] = cuota;
+    var acumFuturo = res.slice(mesCorte + 1).reduce(function(a, b){ return a + b; }, 0);
+    var residuo = Math.round((saldo - acumFuturo) * 100) / 100;
+    res[mAct[n - 1]] = Math.round((res[mAct[n - 1]] + residuo) * 100) / 100;
+  } else if (n === 0 && saldo > 0.005){
+    res[11] = Math.round((res[11] + saldo) * 100) / 100;
+    obs = tipo + ': Sin meses activos. Saldo S/ ' + saldo + ' a DIC.';
+  }
+  return { ms: res, obs: obs };
+}
+
+// ─── 2. Control de Interfaz del Modal ───
+function abrirEditarProg(code){
+  if (!S.metaData) return;
+  var c = S.metaData.clasificadores.find(function(x){ return x.clasificador === code; });
+  if (!c) return;
+  _epClasifCode = code;
+  _epCantEdit   = c.cantM.slice();
+
+  $('ep-clasif-info').innerHTML =
+    '<strong style="color:var(--accent);font-family:var(--mono)">' + c.clasificador + '</strong> — ' +
+    '<span style="color:var(--text)">' + c.recurso + '</span>' +
+    '<span style="display:block;margin-top:3px;font-size:.7rem;color:var(--text3)">PIM: ' + fmtS(c.pim) + ' · Meta física actual: ' + c.totalFisico + ' meses</span>';
+
+  $('ep-preview').style.display = 'none';
+  _epRenderTabla(c);
+  cerrarModal('modal-confirm-prog');
+  abrirModal('modal-edit-prog');
+}
+
+function _epRenderTabla(c){
+  var mc    = obtenerMesCorteActivo();
+  var tbody = $('ep-tbody');
+
+  var filaCant = '<tr><td class="lbl" style="color:var(--text2);font-weight:600">CANTIDAD MENSUAL';
+  filaCant += '<div style="display:flex;gap:5px;margin-top:5px">' +
+    '<button class="btn btn-ghost btn-sm" style="font-size:.6rem;padding:2px 7px" onclick="epActivarTodosFuturos()">Activar futuros</button>' +
+    '<button class="btn btn-ghost btn-sm" style="font-size:.6rem;padding:2px 7px" onclick="epDesactivarTodosFuturos()">Desactivar futuros</button>' +
+    '</div></td>';
+
+  MESES_C.forEach(function(m, i){
+    var ejecutado = (i <= mc);
+    var activo    = _epCantEdit[i] > 0;
+
+    if (ejecutado){
+      filaCant += '<td style="text-align:center;padding:4px 2px">' +
+        '<div class="ep-cb ep-cb-locked" title="Mes ejecutado (bloqueado)">' +
+        (activo
+          ? '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#16A34A;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+          : '<span style="color:#94A3B8;font-size:.6rem">—</span>') +
+        '<svg viewBox="0 0 24 24" style="width:9px;height:9px;stroke:#94A3B8;fill:none;stroke-width:2;position:absolute;bottom:1px;right:1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+        '</div>' +
+        '<div style="font-size:.55rem;color:var(--text3);margin-top:1px">' + m + '</div></td>';
+    } else {
+      filaCant += '<td style="text-align:center;padding:4px 2px">' +
+        '<div class="ep-cb ' + (activo ? 'ep-cb-on' : 'ep-cb-off') + '" ' +
+        'onclick="epToggleMes(' + i + ')" title="Clic para ' + (activo ? 'desactivar' : 'activar') + ' ' + m + '">' +
+        (activo
+          ? '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+          : '') +
+        '</div>' +
+        '<div style="font-size:.55rem;color:var(--text3);margin-top:1px">' + m + '</div></td>';
+    }
+  });
+
+  var totCant = _epCantEdit.reduce(function(a, b){ return a + b; }, 0);
+  filaCant += '<td class="total-col" id="ep-cant-total">' + totCant + '</td></tr>';
+
+  var filaCert = '<tr><td class="lbl" style="color:var(--ok)">CERTIFICACIÓN (actual)</td>';
+  c.certM.forEach(function(v){ filaCert += '<td>' + fmtN(v) + '</td>'; });
+  filaCert += '<td class="total-col">' + fmtN(c.certTotal) + '</td></tr>';
+
+  var filaDeve = '<tr><td class="lbl" style="color:var(--accent)">DEVENGADO (actual)</td>';
+  c.deveM.forEach(function(v){ filaDeve += '<td>' + fmtN(v) + '</td>'; });
+  filaDeve += '<td class="total-col">' + fmtN(c.deveTotal) + '</td></tr>';
+
+  tbody.innerHTML = filaCant + filaCert + filaDeve;
+}
+
+// ─── 3. Acciones de Usuario (Toggles y Vista Previa) ───
+function epToggleMes(idx){
+  var mc = obtenerMesCorteActivo();
+  if (idx <= mc) { toast('No puedes editar un mes ejecutado', 'warn'); return; }
+  _epCantEdit[idx] = _epCantEdit[idx] > 0 ? 0 : 1;
+  var c = S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  if (c) _epRenderTabla(c);
+  $('ep-preview').style.display = 'none';
+}
+
+function epActivarTodosFuturos(){
+  var mc = obtenerMesCorteActivo();
+  for (var i = mc + 1; i < 12; i++) _epCantEdit[i] = 1;
+  var c = S.metaData && S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  if (c) _epRenderTabla(c);
+  $('ep-preview').style.display = 'none';
+}
+
+function epDesactivarTodosFuturos(){
+  var mc = obtenerMesCorteActivo();
+  for (var i = mc + 1; i < 12; i++) _epCantEdit[i] = 0;
+  var c = S.metaData && S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  if (c) _epRenderTabla(c);
+  $('ep-preview').style.display = 'none';
+}
+
+// Para campos numéricos manuales (si se volvieran a habilitar)
+function epOnCantChange(input, idx){
+  var v = parseInt(input.value, 10);
+  if (isNaN(v) || v < 0) v = 0;
+  if (v > 1) v = 1;
+  input.value = v;
+  _epCantEdit[idx] = v;
+  var totCant = _epCantEdit.reduce(function(a, b){ return a + b; }, 0);
+  var tds = input.closest('tr').querySelectorAll('td');
+  tds[tds.length - 1].textContent = totCant;
+  $('ep-preview').style.display = 'none';
+}
+
+function epRecalcularPreview(){
+  if (!S.metaData || !_epClasifCode) return;
+  var c = S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  if (!c) return;
+  var mc = obtenerMesCorteActivo();
+  var totFut = 0;
+  for (var i = mc + 1; i < 12; i++) if (_epCantEdit[i] > 0) totFut++;
+  if (totFut === 0){ toast('Activa al menos 1 mes posterior al corte', 'warn'); return; }
+
+  var calcC = _calcGenericoJS(c.pim, _epCantEdit, c.ejeCertM, c.ejeCertTotal, mc, 'CERT');
+  var calcD = _calcGenericoJS(c.pim, _epCantEdit, c.ejeDeveM, c.ejeDeveTotal, mc, 'DEVE');
+
+  var rowsHtml = function(label, vals, color){
+    var cells = vals.map(function(v, i){
+      var bg = i <= mc ? 'background:rgba(22,163,74,.13)' : (_epCantEdit[i] > 0 ? 'background:rgba(59,130,246,.1)' : 'opacity:.3');
+      return '<td style="' + bg + ';font-family:var(--mono);font-size:.68rem;padding:3px 6px;text-align:right;border:1px solid var(--border)">' + (i <= mc ? '<em style="font-size:.6rem">real</em> ' : '') + fmtN(v) + '</td>';
+    });
+    return '<tr><td style="padding:3px 8px;font-size:.7rem;color:' + color + ';font-weight:600;white-space:nowrap;border:1px solid var(--border)">' + label + '</td>' + cells.join('') + '<td style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:' + color + ';text-align:right;padding:3px 6px;border:1px solid var(--border)">' + fmtN(vals.reduce(function(a,b){return a+b;},0)) + '</td></tr>';
+  };
+  
+  var headerRow = '<tr><th style="padding:3px 8px;font-size:.58rem;text-align:left;background:var(--surface2);border:1px solid var(--border)">Concepto</th>' + MESES_C.map(function(m, i){ return '<th style="padding:3px 6px;font-size:.58rem;text-align:right;' + (i <= mc ? 'background:rgba(22,163,74,.08)' : '') + ';border:1px solid var(--border)">' + m + '</th>'; }).join('') + '<th style="padding:3px 6px;font-size:.58rem;text-align:right;background:var(--surface2);border:1px solid var(--border)">TOTAL</th></tr>';
+  
+  var leyenda = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:.65rem;color:var(--text3)"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(22,163,74,.25);border-radius:2px;display:inline-block"></span>Ejecutado (intocable)</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(59,130,246,.2);border-radius:2px;display:inline-block"></span>Futuro activo (redistribuido)</span></div>';
+
+  $('ep-preview-content').innerHTML = '<table style="border-collapse:collapse;width:100%;overflow-x:auto">' + headerRow + rowsHtml('CERTIFICACIÓN', calcC.ms, 'var(--ok)') + rowsHtml('DEVENGADO', calcD.ms, 'var(--accent)') + '</table>' + leyenda;
+  $('ep-preview-content').style.whiteSpace = 'normal';
+  $('ep-preview').style.display = 'block';
+}
+
+// ─── 4. Guardado en Base de Datos ───
+function epConfirmarGuardar(){
+  if (!_epClasifCode || !S.metaData) return;
+  var mc = obtenerMesCorteActivo();
+  var totFut = 0;
+  for (var i = mc + 1; i < 12; i++) if (_epCantEdit[i] > 0) totFut++;
+  if (totFut === 0){ toast('Activa al menos 1 mes posterior al corte', 'warn'); return; }
+  
+  var c = S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  var detHtml = '<strong style="color:var(--accent);font-family:var(--mono)">' + _epClasifCode + '</strong><br>' +
+    '<span style="font-size:.76rem;color:var(--text2)">Meses futuros activos: <strong>' + _epCantEdit.map(function(v,i){ return (v && i > mc) ? MESES_C[i] : null; }).filter(Boolean).join(', ') + '</strong></span><br>' +
+    '<span style="font-size:.76rem;color:var(--text2)">Meses ejecutados (intocables): <strong style="color:var(--ok-text)">' + (mc >= 0 ? MESES_C.slice(0, mc + 1).join(', ') : 'ninguno') + '</strong></span>';
+  
+  $('mcp-detail').innerHTML = detHtml;
+  $('mcp-btn-ok').onclick = function(){ cerrarModal('modal-confirm-prog'); _epGuardar(); };
+  cerrarModal('modal-edit-prog');
+  abrirModal('modal-confirm-prog');
+}
+
+function _epGuardar(){
+  if (!S.metaData || !_epClasifCode) return;
+  var mc = obtenerMesCorteActivo();
+  var c  = S.metaData.clasificadores.find(function(x){ return x.clasificador === _epClasifCode; });
+  if (!c) return;
+
+  // RESTRICCIÓN DE HIERRO: Restaurar meses ejecutados con data real antes de guardar
+  var cantProtegido = _epCantEdit.slice();
+  for (var i = 0; i <= mc; i++) cantProtegido[i] = c.cantM[i];
+
+  var calcC = _calcGenericoJS(c.pim, cantProtegido, c.ejeCertM, c.ejeCertTotal, mc, 'CERT');
+  var calcD = _calcGenericoJS(c.pim, cantProtegido, c.ejeDeveM, c.ejeDeveTotal, mc, 'DEVE');
+
+  toast('Guardando cambios...', 'info', 3000);
+  gasCall('actualizarCantMensual', [S.currentMeta, _epClasifCode, cantProtegido, mc], function(res){
+    if (!res || !res.ok){ toast(res && res.mensaje ? res.mensaje : 'Error al guardar', 'err'); return; }
+    
+    c.cantM = cantProtegido.slice();
+    c.certM = res.certM || calcC.ms;
+    c.deveM = res.deveM || calcD.ms;
+    c.certTotal = res.certTotal !== undefined ? res.certTotal : calcC.ms.reduce(function(a,b){return a+b;},0);
+    c.deveTotal = res.deveTotal !== undefined ? res.deveTotal : calcD.ms.reduce(function(a,b){return a+b;},0);
+    c.totalFisico = cantProtegido.reduce(function(a,b){return a+b;},0);
+    
+    if (_currentClasif === _epClasifCode) renderClasifDetail(c);
+    
+    toast('Programación actualizada correctamente', 'ok', 4000);
+    _epClasifCode = null;
+    _epCantEdit   = [];
+  }, function(err){ toast('Error: ' + err.message, 'err'); });
+}
+</script>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SISCOP · UGEL 06</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  
+  <script>
+    /**
+     * GESTIÓN DE TEMAS (Dark/Light):
+     * Se ejecuta antes de renderizar el body para evitar el "destello blanco" (Flash of Unstyled Content).
+     */
+    (function(){
+      var t = localStorage.getItem('SISCOP-theme');
+      var sys = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      // Prioriza preferencia guardada, sino usa la del sistema operativo
+      document.documentElement.className = (t === 'dark' || (t === null && sys)) ? 'dark' : 'light';
+    })();
+  </script>
+  
+  <?!= include('CSS_Global'); ?>
+</head>
+
+<body>
+
+  <div id="app">
+    
+    <?!= include('View_Sidebar'); ?>
+    
+    <div id="main">
+      <?!= include('View_Topbar'); ?>
+      
+      <div id="content">
+        <?!= include('View_Upload'); ?>         <?!= include('View_Dashboard'); ?>      <?!= include('View_Meta'); ?>           <?!= include('View_Clasificadores'); ?> <?!= include('View_Exportar'); ?>       <?!= include('View_Historico'); ?>      <?!= include('View_Historial'); ?>      <?!= include('View_Usuarios'); ?>       
+      </div>
+    </div>
+  </div>
+
+  <?!= include('View_Modales'); ?>
+
+  <?!= include('JS_Core'); ?>      <?!= include('JS_Upload'); ?>    <?!= include('JS_Dashboard'); ?> <?!= include('JS_Editor'); ?>    <?!= include('JS_Admin'); ?>     
+  
+  <script>
+    /**
+     * BOOTSTRAPPER: Punto de entrada de la lógica de cliente.
+     * Se asegura de que el DOM esté listo antes de validar seguridad y permisos.
+     */
+    window.addEventListener('DOMContentLoaded', function() {
+      // Inicia el flujo de autenticación y carga de datos iniciales
+      iniciarSeguridad();
+      
+      // --- Autoselección de mes actual ---
+      var mesSelect = document.getElementById('mes-select');
+      if (mesSelect) {
+        mesSelect.value = new Date().getMonth();
+      }
+    });
+    
+  </script>
+</body>
+</html>

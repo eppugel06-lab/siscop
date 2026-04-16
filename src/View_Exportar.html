@@ -1,0 +1,61 @@
+<div class="page" id="page-export">
+  <div class="page-header"><h1>Exportar Datos</h1><p>Descarga el consolidado en distintos formatos</p></div>
+  <div id="export-grid" style="margin-bottom:16px"></div>
+  <!-- ═══ SISPLAN ENRICHMENT ═══ -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--ok-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ok);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Rellenar Plantilla SISPLAN</div>
+          <div style="font-size:.7rem;color:var(--text3);margin-top:1px">Sube el Excel de plantilla · Los datos del consolidado se inyectan preservando el formato original</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="sisplan-alert" style="display:none;margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label style="display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.8rem;color:var(--text2);transition:all var(--transition)" id="sisplan-upload-label">
+          <input type="file" accept=".xlsx" id="sisplan-file-input" style="display:none" onchange="sisplanOnFileSelected(this)">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <span id="sisplan-file-label">Seleccionar plantilla .xlsx</span>
+        </label>
+        <button class="btn btn-primary" id="btn-sisplan-enriquecer" onclick="sisplanEnriquecerPlantilla()" disabled style="background:var(--ok);box-shadow:0 1px 3px rgba(22,163,74,.3)">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Rellenar y descargar
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-sisplan-reset" onclick="sisplanReset()" style="display:none">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.68"/></svg>
+          Limpiar
+        </button>
+      </div>
+      <div id="sisplan-progress" style="display:none;margin-top:12px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text2)">
+          <div class="spinner"></div>
+          <span id="sisplan-progress-txt">Obteniendo datos del consolidado...</span>
+        </div>
+      </div>
+      <div id="sisplan-result" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Historial de exportaciones</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadExportLog()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Actualizar
+      </button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap export-log-table-desktop">
+        <table>
+          <thead><tr><th>Archivo</th><th>Tipo</th><th>Usuario</th><th class="num">Filas</th><th>Fecha</th></tr></thead>
+          <tbody id="export-log-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="export-log-cards" style="padding:10px 14px 4px;display:none"></div>
+    </div>
+  </div>
+</div>

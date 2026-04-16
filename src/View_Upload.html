@@ -1,0 +1,149 @@
+<div class="page active" id="page-upload">
+  <div class="page-header">
+    <h1>Cargar Insumos</h1>
+    <p>Puedes cargar uno o más insumos; los no cargados usarán los datos previos del sistema</p>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-body" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px" id="mes-select-wrap">
+        <div style="font-size:.76rem;font-weight:700;color:var(--text);margin-bottom:5px">Mes de corte
+          <span style="font-size:.66rem;font-weight:400;color:var(--text3);margin-left:4px" id="mes-select-hint">— aplica a Devengado y Certificado</span>
+        </div>
+        <select id="mes-select" class="ui-select" onchange="alCambiarMes()">
+          <option value="">— Seleccionar mes —</option>
+          <option value="0">Enero</option>
+          <option value="1">Febrero</option>
+          <option value="2">Marzo</option>
+          <option value="3">Abril</option>
+          <option value="4">Mayo</option>
+          <option value="5">Junio</option>
+          <option value="6">Julio</option>
+          <option value="7">Agosto</option>
+          <option value="8">Setiembre</option>
+          <option value="9">Octubre</option>
+          <option value="10">Noviembre</option>
+          <option value="11">Diciembre</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:.76rem;font-weight:700;color:var(--text);margin-bottom:5px">Tipo de Proceso</div>
+        <select id="tipo-proceso-select" class="ui-select" onchange="alCambiarMes()">
+          <option value="NORMAL">Ejecución Normal (Requiere Certificado)</option>
+          <option value="PIA">Programación PIA (Solo PIA - NO Ejecución)</option>
+        </select>
+      </div>
+      <div id="mes-warning-wrap" style="display:none;flex:1;min-width:200px">
+        <div class="alert alert-info" style="margin-bottom:0">
+          <svg class="alert-ico" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span id="mes-warning-text"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drop-grid" id="drop-grid">
+    <div class="drop-zone" id="dz-sisplan" ondragover="dzOver(event,'sisplan')" ondragleave="dzLeave(event,'sisplan')"
+      ondrop="dzDrop(event,'sisplan')">
+      <input type="file" accept=".xlsx,.xls" onchange="onFileSelect(event,'sisplan')">
+      <div class="dz-tag">SISPLAN</div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg></div>
+      <div class="dz-title">Programación Anual</div>
+      <div class="dz-sub" id="dz-sisplan-sub">Arrastra o haz clic · No requiere mes de corte</div>
+      <div class="dz-file" id="dz-sisplan-file"></div>
+      <div class="dz-preload-badge" id="dz-sisplan-preload"></div>
+    </div>
+    <div class="drop-zone" id="dz-devengado" ondragover="dzOver(event,'devengado')"
+      ondragleave="dzLeave(event,'devengado')" ondrop="dzDrop(event,'devengado')">
+      <input type="file" accept=".xlsx,.xls" onchange="onFileSelect(event,'devengado')">
+      <div class="dz-tag">DEVENGADO</div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24">
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg></div>
+      <div class="dz-title">Ejecución Devengado</div>
+      <div class="dz-sub" id="dz-devengado-sub">Arrastra o haz clic · Requiere mes de corte</div>
+      <div class="dz-file" id="dz-devengado-file"></div>
+      <div class="dz-preload-badge" id="dz-devengado-preload"></div>
+    </div>
+    <div class="drop-zone" id="dz-certificado" ondragover="dzOver(event,'certificado')"
+      ondragleave="dzLeave(event,'certificado')" ondrop="dzDrop(event,'certificado')">
+      <input type="file" accept=".xlsx,.xls" onchange="onFileSelect(event,'certificado')">
+      <div class="dz-tag">CERTIFICADO</div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24">
+          <polyline points="20 6 9 17 4 12" />
+        </svg></div>
+      <div class="dz-title">Ejecución Certificado</div>
+      <div class="dz-sub" id="dz-certificado-sub">Arrastra o haz clic · Requiere mes de corte</div>
+      <div class="dz-file" id="dz-certificado-file"></div>
+      <div class="dz-preload-badge" id="dz-certificado-preload"></div>
+    </div>
+  </div>
+  <div id="validation-alerts"></div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+    <button class="btn btn-primary" id="btn-procesar" onclick="solicitarConfirmacion()" disabled>
+      <svg viewBox="0 0 24 24">
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+      Procesar Datos
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="resetUpload()">
+      <svg viewBox="0 0 24 24">
+        <polyline points="1 4 1 10 7 10" />
+        <path d="M3.51 15a9 9 0 1 0 .49-4.68" />
+      </svg>
+      Reiniciar
+    </button>
+    <span id="procesar-hint" style="font-size:.72rem;color:var(--text3)">Carga al menos un archivo</span>
+  </div>
+  <div id="log-panel">
+    <div class="log-header"><span class="log-header-label">Log de proceso</span><span id="log-progress"></span></div>
+    <div id="log-inner"></div>
+  </div>
+  <div id="resumen-final" style="display:none">
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div class="section-label">Resultado del proceso</div>
+      <div class="summary-grid">
+        <div class="summary-card sc-ok">
+          <div class="sc-num" id="res-ok">0</div>
+          <div class="sc-lbl">Ok</div>
+        </div>
+        <div class="summary-card sc-obs">
+          <div class="sc-num" id="res-obs">0</div>
+          <div class="sc-lbl">Observado</div>
+        </div>
+        <div class="summary-card sc-add">
+          <div class="sc-num" id="res-add">0</div>
+          <div class="sc-lbl">Agregar</div>
+        </div>
+        <div class="summary-card sc-del">
+          <div class="sc-num" id="res-del">0</div>
+          <div class="sc-lbl">Eliminar</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="navTo('dashboard')">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          Ver Dashboard
+        </button>
+        <button class="btn btn-secondary" onclick="exportar('completo')">
+          <svg viewBox="0 0 24 24">
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Descargar Consolidado
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,679 @@
+<script>
+/* ═══ DASHBOARD CACHÉ Y RENDER ═══ */
+function loadDashboard(){
+  if(S.resumen) {
+    renderDashboardData(S.resumen);
+    return;
+  }
+  $('dash-skeleton').style.display='block';
+  $('dash-content').style.display='none';
+  gasCall('getResumenGeneral',[],function(d){
+    if(!d) return;
+    S.resumen = d;
+    renderDashboardData(d);
+  },null);
+}
+
+function renderDashboardData(d) {
+  $('dash-skeleton').style.display='none';
+  $('dash-content').style.display='block';
+  $('kpi-pia').textContent=fmtS(d.pia);
+  $('kpi-pim').textContent=fmtS(d.pim);
+  $('kpi-cert').textContent=d.pctCert.toFixed(1)+'%';
+  $('kpi-deve').textContent=d.pctDeve.toFixed(1)+'%';
+  setTimeout(function(){
+    var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
+    $('bar-cert').style.width=pC+'%';
+    $('bar-cert').className='kpi-bar-fill '+(pC>=80?'fill-green':pC>=50?'fill-amber':'fill-red');
+    $('bar-deve').style.width=pD+'%';
+    $('bar-deve').className='kpi-bar-fill '+(pD>=80?'fill-green':pD>=50?'fill-amber':'fill-blue');
+  },100);
+  $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
+  $('sb-periodo').textContent=d.periodo;
+
+  // Actualizar los números de los botones interactivos
+  if ($('res-ok-count')) $('res-ok-count').textContent = d.estadosCount.ok;
+  if ($('res-obs-count')) $('res-obs-count').textContent = d.estadosCount.observado;
+  if ($('res-add-count')) $('res-add-count').textContent = d.estadosCount.agregar;
+  if ($('res-del-count')) $('res-del-count').textContent = d.estadosCount.eliminar;
+  
+  // Reiniciamos estado y preparamos la paginación del Dashboard
+  S.dashMetaFiltered = d.metas.slice();
+  S.dashMetaPage = 1;
+  if($('dash-meta-search')) $('dash-meta-search').value = '';
+  renderDashMetaTable();
+}
+
+/* Estado de ordenamiento del dashboard */
+var _dashSort={col:null,dir:'asc'};
+/* Variable para el filtro de estados interactivo */
+var dashFiltroEstado = 'ALL';
+
+function filtrarDashMetas(q){
+  if(!S.resumen) return;
+  var q2=q.toLowerCase();
+  S.dashMetaFiltered=S.resumen.metas.filter(function(m){
+    return m.sf.toLowerCase().indexOf(q2)>-1||m.den.toLowerCase().indexOf(q2)>-1;
+  });
+  S.dashMetaPage=1;
+  _aplicarSortDash();
+  renderDashMetaTable();
+}
+
+function cambiarDashPgSize(v){
+  S.dashMetaPageSize=parseInt(v,10);
+  S.dashMetaPage=1;
+  renderDashMetaTable();
+}
+
+function sortDashMeta(col){
+  if(_dashSort.col===col){
+    _dashSort.dir=_dashSort.dir==='asc'?'desc':'asc';
+  } else {
+    _dashSort.col=col;
+    _dashSort.dir='asc';
+  }
+  _aplicarSortDash();
+  _actualizarSortHeaders();
+  S.dashMetaPage=1;
+  renderDashMetaTable();
+}
+
+function _aplicarSortDash(){
+  if(!_dashSort.col) return;
+  var col=_dashSort.col, dir=_dashSort.dir;
+  S.dashMetaFiltered.sort(function(a,b){
+    var va,vb;
+    if(col==='sf')     { va=a.sf;       vb=b.sf; }
+    else if(col==='pim')   { va=a.pim;     vb=b.pim; }
+    else if(col==='cert')  { va=a.pctCert; vb=b.pctCert; }
+    else if(col==='deve')  { va=a.pctDeve; vb=b.pctDeve; }
+    else if(col==='estado'){ va=a.estado;  vb=b.estado; }
+    else { return 0; }
+    if(typeof va==='string') return dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return dir==='asc'?va-vb:vb-va;
+  });
+}
+
+function _actualizarSortHeaders(){
+  document.querySelectorAll('thead th.sortable').forEach(function(th){
+    th.classList.remove('asc','desc');
+    if(th.dataset.col===_dashSort.col) th.classList.add(_dashSort.dir);
+  });
+}
+
+function renderDashMetaTable(){
+  if(!S.resumen) return;
+  var ps=S.dashMetaPageSize, page=S.dashMetaPage;
+  
+  var listaFinal = S.dashMetaFiltered.filter(function(m) {
+    if (dashFiltroEstado === 'ALL') return true;
+    if (!m.counts) return true; 
+    if (dashFiltroEstado === 'ok')  return m.counts.ok > 0;
+    if (dashFiltroEstado === 'obs') return m.counts.obs > 0;
+    if (dashFiltroEstado === 'add') return m.counts.add > 0;
+    if (dashFiltroEstado === 'del') return m.counts.del > 0;
+    return true;
+  });
+
+  var total=listaFinal.length;
+  var totalPages=ps>=999?1:Math.ceil(total/ps);
+  var start=(page-1)*ps, end=ps>=999?total:Math.min(start+ps,total);
+  var slice=listaFinal.slice(start,end);
+
+  $('dash-meta-count').textContent='Mostrando '+(total===0?0:start+1)+'–'+end+' de '+total;
+
+  if (total === 0) {
+    var msj = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">No hay metas que coincidan con los filtros.</td></tr>';
+    $('metas-tbody').innerHTML = msj;
+    var cardsEl=$('dash-meta-cards-mobile');
+    if(cardsEl) cardsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">No hay metas</div>';
+    $('dash-meta-pagination').innerHTML = '';
+    return;
+  }
+
+  // --- FUNCIÓN GENERADORA DE BADGES REORDENABLES ---
+  function getOrdenadosBadges(m) {
+    if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
+    
+    var arr = [];
+    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="micro-badge del">'+m.counts.del+' Del</span>' });
+    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="micro-badge obs">'+m.counts.obs+' Obs</span>' });
+    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="micro-badge add">'+m.counts.add+' Add</span>' });
+    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="micro-badge ok">'+m.counts.ok+' Ok</span>' });
+
+    // Si hay un filtro activo, empujamos ese ID al inicio de la lista
+    if (dashFiltroEstado !== 'ALL') {
+      arr.sort(function(a, b) {
+        if (a.id === dashFiltroEstado) return -1;
+        if (b.id === dashFiltroEstado) return 1;
+        return 0;
+      });
+    }
+    
+    return '<div class="cell-badges" style="display:flex;gap:4px;flex-wrap:wrap">' + 
+           arr.map(function(b){ return b.html; }).join('') + 
+           '</div>';
+  }
+
+  /* Tabla desktop */
+  $('metas-tbody').innerHTML=slice.map(function(m,i){
+    var denEsc=m.den.replace(/"/g,'&quot;');
+    var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+
+    return '<tr onclick="selectMeta(\''+m.sf+'\')" style="cursor:pointer">'+
+      '<td class="code">'+m.sf+'</td>'+
+      '<td class="den-cell" title="'+denEsc+'">'+m.den+'</td>'+
+      '<td class="num">'+fmtS(m.pim)+'</td>'+
+      '<td class="num"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
+      '<td class="num"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
+      '<td>'+badges+'</td>'+
+    '</tr>';
+  }).join('');
+
+  /* Cards móvil */
+  var cardsEl=$('dash-meta-cards-mobile');
+  if(cardsEl){
+    cardsEl.innerHTML=slice.map(function(m){
+      var pC=Math.min(m.pctCert,100), pD=Math.min(m.pctDeve,100);
+      var cC=pC>=80?'var(--ok)':pC>=50?'var(--obs)':'var(--del)';
+      var cD=pD>=80?'var(--ok)':pD>=50?'var(--obs)':'var(--accent)';
+      
+      var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+
+      return '<div class="dash-meta-card" onclick="selectMeta(\''+m.sf+'\')">'+
+        '<div class="dmc-header">'+
+          '<span class="dmc-code">'+m.sf+'</span>'+
+          badges+
+        '</div>'+
+        '<div class="dmc-den">'+m.den+'</div>'+
+        '<div class="dmc-row"><span class="dmc-label">Certificado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pC+'%;background:'+cC+'"></div></div><span class="dmc-pct" style="color:'+cC+'">'+m.pctCert+'%</span></div>'+
+        '<div class="dmc-row"><span class="dmc-label">Devengado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pD+'%;background:'+cD+'"></div></div><span class="dmc-pct" style="color:'+cD+'">'+m.pctDeve+'%</span></div>'+
+        '<div class="dmc-footer"><span class="dmc-pim">PIM: '+fmtS(m.pim)+'</span></div>'+
+      '</div>';
+    }).join('');
+  }
+
+  /* Paginación */
+  var pgHtml='';
+  if(totalPages>1){
+    pgHtml+='<button class="pg-btn" '+(page<=1?'disabled':'')+' onclick="goDashPage('+(page-1)+')">‹</button>';
+    for(var p=1;p<=totalPages;p++){
+      if(p===1||p===totalPages||Math.abs(p-page)<=1) pgHtml+='<button class="pg-btn '+(p===page?'active':'')+'" onclick="goDashPage('+p+')">'+p+'</button>';
+      else if(Math.abs(p-page)===2) pgHtml+='<span class="pg-info">…</span>';
+    }
+    pgHtml+='<button class="pg-btn" '+(page>=totalPages?'disabled':'')+' onclick="goDashPage('+(page+1)+')">›</button>';
+    pgHtml+='<span class="pg-info">'+total+' total</span>';
+  }
+  $('dash-meta-pagination').innerHTML=pgHtml;
+}
+
+function goDashPage(p){ S.dashMetaPage=p; renderDashMetaTable(); }
+
+/* ═══ LÓGICA DE FILTRO INTERACTIVO (CHIPS) ═══ */
+function toggleFiltro(estado) {
+  dashFiltroEstado = estado;
+  S.dashMetaPage = 1; 
+  
+  ['ok','obs','add','del'].forEach(function(chip) {
+    var btn = $('chip-'+chip);
+    if (!btn) return;
+    
+    if (estado === 'ALL' || estado === chip) {
+      // Activo: Colores vibrantes y tamaño normal
+      btn.classList.remove('inactive');
+      btn.style.opacity = "1";
+      btn.style.filter = "none"; // <-- ESTO SOLUCIONA EL PROBLEMA DEL COLOR
+      btn.style.transform = "scale(1)";
+    } else {
+      // Inactivo: Opaco y grisáceo
+      btn.classList.add('inactive');
+      btn.style.opacity = "0.35";
+      btn.style.filter = "grayscale(0.8)";
+      btn.style.transform = "scale(0.95)";
+    }
+  });
+
+  var btnClear = $('btn-clear-filter');
+  if(btnClear) {
+    btnClear.style.display = (estado === 'ALL') ? 'none' : 'inline-flex';
+  }
+
+  renderDashMetaTable();
+}
+
+/* ═══ SELECTOR META ═══ */
+function loadMetaSelect(){
+  gasCall('getSecFuncList',[],function(lista){
+    var sel=$('meta-select');
+    sel.innerHTML='<option value="">Meta...</option>';
+    if(lista) lista.forEach(function(it){var o=document.createElement('option');o.value=it.sf;o.textContent=it.sf;sel.appendChild(o);});
+  },null);
+}
+function onMetaChange(sf){if(!sf) return;S.currentMeta=sf;loadMetaData(sf);}
+function selectMeta(sf){S.currentMeta=sf;$('meta-select').value=sf;loadMetaData(sf);navTo('meta');}
+
+/* ═══ DATOS META ═══ */
+function loadMetaData(sf){
+  $('meta-no-data').style.display='none';
+  $('meta-skeleton').style.display='block';
+  $('meta-content').style.display='none';
+  $('clasif-no-meta').style.display='none';
+  $('clasif-layout-wrap').style.display='none';
+  gasCall('getDatosSecFunc',[sf],function(d){
+    $('meta-skeleton').style.display='none';
+    if(!d){toast('Sin datos para esta meta','warn');return;}
+    S.metaData=d; S.metaPage=1; S.metaFiltered=d.clasificadores.slice();
+    $('meta-secfunc-badge').textContent=d.secFunc;
+    $('meta-denom').textContent=d.denominacion;
+    $('meta-um').textContent=d.unidadMedida||'—';
+    var pC=d.totales.pim>0?Math.min(d.totales.ejeCert/d.totales.pim*100,100):0;
+    var pD=d.totales.pim>0?Math.min(d.totales.ejeDeve/d.totales.pim*100,100):0;
+    setTimeout(function(){
+      $('meta-bar-cert').style.width=pC+'%';
+      $('meta-bar-deve').style.width=pD+'%';
+      $('meta-pct-cert').textContent=pC.toFixed(1)+'%';
+      $('meta-pct-deve').textContent=pD.toFixed(1)+'%';
+    },100);
+    $('meta-kpi-grid').innerHTML=
+      mkKpi('PIM',fmtS(d.totales.pim))+
+      mkKpi('Ejec. Certificado',fmtS(d.totales.ejeCert),pC.toFixed(1)+'%','fill-green')+
+      mkKpi('Ejec. Devengado',fmtS(d.totales.ejeDeve),pD.toFixed(1)+'%','fill-blue')+
+      mkKpi('Clasificadores',d.clasificadores.length.toString());
+    renderMetaAlerts(d.clasificadores);
+    renderClasifSidebar(d.clasificadores,null);
+    renderMetaTable();
+    $('meta-content').style.display='block';
+    $('clasif-layout-wrap').style.display='block';
+  },function(err){toast('Error: '+err.message,'err');$('meta-skeleton').style.display='none';});
+}
+
+function mkKpi(label,val,sub,barClass){
+  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-val">'+val+'</div>'+
+    (sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div>';
+}
+
+/* ═══ ALERTAS OBSERVACIÓN — DISEÑO COMPACTO Y HORIZONTAL ═══ */
+function renderMetaAlerts(clasificadores){
+  var c=$('meta-alerts'); c.innerHTML='';
+  var conObs=clasificadores.filter(function(cl){return cl.estado&&cl.estado!=='Ok'&&cl.observacion;});
+  if(!conObs.length) return;
+
+  var grupos={};
+  conObs.forEach(function(cl){
+    var key=cl.observacion.trim();
+    if(!grupos[key]) grupos[key]={obs:key, estado:cl.estado, clasificadores:[]};
+    grupos[key].clasificadores.push(cl.clasificador);
+    
+    var prio={eliminar:3,observado:2,agregar:1};
+    var pActual=prio[grupos[key].estado.toLowerCase()]||0;
+    var pNuevo=prio[cl.estado.toLowerCase()]||0;
+    if(pNuevo>pActual) grupos[key].estado=cl.estado;
+  });
+
+  var canFix=(S.perfil&&S.perfil.rol!=='Lector');
+  
+  Object.keys(grupos).forEach(function(key){
+    var g=grupos[key];
+    var type=g.estado==='Eliminar'?'err':g.estado==='Observado'?'warn':'info';
+    var el=document.createElement('div');
+    
+    el.className='alert alert-'+type;
+    el.style.display = 'flex';
+    el.style.alignItems = 'center'; 
+    el.style.gap = '12px';
+    el.style.padding = '10px 14px';
+    el.style.borderRadius = '8px';
+    
+    var clListEscaped = JSON.stringify(g.clasificadores).replace(/"/g, '&quot;');
+    var obsEscaped = g.obs.replace(/'/g, "\\'");
+
+    var esGrupo = g.clasificadores.length > 1;
+    var titulo = esGrupo ? g.clasificadores.length + ' clasificadores' : g.clasificadores[0];
+    var textoTitle = esGrupo ? 'Marcar grupo como corregido' : 'Marcar como corregido';
+
+    el.innerHTML=
+      // 1. Icono (Izquierda)
+      '<div style="flex-shrink:0; display:flex;">' +
+        '<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+      '</div>'+
+      
+      // 2. Contenido Central
+      '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;">'+
+        '<div style="font-size:0.75rem; color:var(--text2); line-height:1.4;">' +
+          '<span class="badge '+badgeClass(g.estado)+'" style="font-size:0.6rem; padding:2px 6px; margin-right:6px; vertical-align:middle;">' + g.estado + '</span>' +
+          '<strong style="color:var(--text);">' + titulo + '</strong> — ' + g.obs +
+        '</div>' +
+        
+        // --- CORRECCIÓN AQUÍ: Solo dibujamos las etiquetas si hay más de 1 clasificador ---
+        (esGrupo ?
+          '<div style="display:flex; flex-wrap:wrap; gap:4px;">' +
+            g.clasificadores.map(function(cod){
+              return '<span style="background:var(--surface-container-highest, rgba(255,255,255,0.05)); border:1px solid var(--outline-variant, rgba(255,255,255,0.1)); padding:2px 6px; border-radius:4px; font-family:var(--mono); font-size:0.65rem; color:var(--text);">' + cod + '</span>';
+            }).join('') +
+          '</div>' 
+        : '') +
+        // ----------------------------------------------------------------------------------
+
+      '</div>'+
+
+      // 3. Botón de Acción (Alineado a la extrema Derecha)
+      (canFix ? 
+        '<div style="flex-shrink:0; margin-left:8px;">' +
+          '<button onclick="solicitarCorrecion(\''+S.currentMeta+'\','+clListEscaped+',\''+obsEscaped+'\')" '+
+                  'title="' + textoTitle + '" ' +
+                  'style="background:rgba(34,197,94,0.1); color:#4ADE80; border:1px solid rgba(34,197,94,0.3); border-radius:6px; padding:6px 12px; font-size:0.7rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;" '+
+                  'onmouseover="this.style.background=\'rgba(34,197,94,0.2)\'" onmouseout="this.style.background=\'rgba(34,197,94,0.1)\'">' +
+            '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+            'Corregir' + 
+          '</button>' +
+        '</div>' 
+      : '') +
+
+      '</div>'; 
+
+    c.appendChild(el);
+  });
+}
+
+/* ═══ ACTUALIZACIÓN REACTIVA AL CORREGIR ═══
+   clasificadores puede ser string (un clasificador) o array (varios agrupados) */
+function solicitarCorrecion(secFunc, clasificadores, detalle){
+  // 1. Normalizamos: si viene un solo string, lo volvemos array
+  var clArray = Array.isArray(clasificadores) ? clasificadores : [clasificadores];
+  var labelCl = clArray.length === 1 ? clArray[0] : clArray.length + ' clasificadores';
+
+  // 2. Preparamos el Modal
+  $('obs-fix-clasif').textContent = secFunc + ' · ' + labelCl;
+  $('obs-fix-detalle').textContent = detalle;
+
+  // 3. Definimos la acción del botón de confirmación del modal
+  $('obs-fix-btn').onclick = function(){
+    cerrarModal('modal-obs-fix');
+    toast('Actualizando grupo en el sistema...', 'info', 3000);
+
+    gasCall('marcarObservacionCorregida', [secFunc, clArray], function(res){
+      if (!res || !res.ok){ toast('Error al actualizar', 'err'); return; }
+
+      if (S.metaData){
+        clArray.forEach(function(codigoClasif){
+          var cl = S.metaData.clasificadores.find(function(x){ return x.clasificador === codigoClasif; });
+          if (!cl) return;
+          
+          var prevEst = cl.estado;
+          cl.estado = 'Ok';
+          cl.observacion = '';
+
+          // Actualizamos el contador global del Dashboard (S.resumen)
+          if (S.resumen && prevEst && prevEst !== 'Ok'){
+            S.resumen.estadosCount.ok++;
+            var pel = prevEst.toLowerCase();
+            if (pel.indexOf('observ') > -1)      S.resumen.estadosCount.observado--;
+            else if (pel.indexOf('agr') > -1)    S.resumen.estadosCount.agregar--;
+            else if (pel.indexOf('elim') > -1)   S.resumen.estadosCount.eliminar--;
+          }
+        });
+
+        // Refrescar los chips de colores del Dashboard si están visibles
+        if ($('estados-chips') && S.resumen) {
+           $('estados-chips').innerHTML = 
+            '<span class="badge ok">'+S.resumen.estadosCount.ok+' Ok</span>'+
+            '<span class="badge obs">'+S.resumen.estadosCount.observado+' Obs</span>'+
+            '<span class="badge add">'+S.resumen.estadosCount.agregar+' Agregar</span>'+
+            '<span class="badge del">'+S.resumen.estadosCount.eliminar+' Eliminar</span>';
+        }
+
+        // 4. RE-RENDER: Actualizamos la UI inmediatamente
+        renderMetaAlerts(S.metaData.clasificadores); // Quita la alerta de la vista
+        renderMetaTable();                           // Cambia los badges en la tabla
+        renderClasifSidebar(S.metaData.clasificadores, _currentClasif); // Actualiza la lista lateral
+      }
+      toast('¡Grupo corregido exitosamente!', 'ok', 4000);
+    }, function(err){ toast('Error: ' + err.message, 'err'); });
+  };
+  abrirModal('modal-obs-fix');
+}
+
+/* ═══ TABLA META CON PAGINACIÓN ═══ */
+function filtrarClasifMeta(q){
+  if(!S.metaData) return;
+  var q2=q.toLowerCase();
+  S.metaFiltered=S.metaData.clasificadores.filter(function(c){
+    return c.clasificador.toLowerCase().indexOf(q2)>-1||c.recurso.toLowerCase().indexOf(q2)>-1;
+  });
+  S.metaPage=1; renderMetaTable();
+}
+var _filtrarDebounce=_debounce(function(){filtrarClasifMeta($('meta-search').value);},250);
+
+function cambiarPgSize(v){S.metaPageSize=parseInt(v);S.metaPage=1;renderMetaTable();}
+
+function renderMetaTable(){
+  if(!S.metaData) return;
+  var ps=S.metaPageSize, page=S.metaPage;
+  var total=S.metaFiltered.length;
+  var totalPages=ps>=999?1:Math.ceil(total/ps);
+  var start=(page-1)*ps, end=ps>=999?total:Math.min(start+ps,total);
+  var slice=S.metaFiltered.slice(start,end);
+  $('meta-count').textContent='Mostrando '+(total===0?0:start+1)+'–'+end+' de '+total;
+
+  $('clasif-tbody-meta').innerHTML=slice.map(function(c,i){
+    return '<tr onclick="selectClasif(\''+c.clasificador+'\')" style="cursor:pointer">'+
+      '<td class="code" style="color:var(--text3)">'+(start+i+1)+'</td>'+
+      '<td class="code">'+c.clasificador+'</td>'+
+      '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.recurso+'</td>'+
+      '<td class="num">'+fmtS(c.pim)+'</td>'+
+      '<td class="num">'+fmtS(c.ejeCertTotal)+'</td>'+
+      '<td class="num">'+fmtS(c.ejeDeveTotal)+'</td>'+
+      '<td><span class="badge '+badgeClass(c.estado)+'">'+c.estado+'</span></td>'+
+    '</tr>';
+  }).join('');
+
+  $('meta-cards-mobile').innerHTML=slice.map(function(c,i){
+    var pC=c.pim>0?(c.ejeCertTotal/c.pim*100):0;
+    var pD=c.pim>0?(c.ejeDeveTotal/c.pim*100):0;
+    return '<div class="meta-card-mobile" onclick="selectClasif(\''+c.clasificador+'\')">'+
+      '<div class="mc-header"><span class="mc-code">'+(start+i+1)+'. '+c.clasificador+'</span><span class="badge '+badgeClass(c.estado)+'">'+c.estado+'</span></div>'+
+      '<div class="mc-den">'+c.recurso+'</div>'+
+      '<div class="mc-bars">'+
+        '<div class="mc-row"><span class="mc-label">Cert.</span><div class="mc-track"><div class="mc-fill" style="width:'+Math.min(pC,100)+'%;background:var(--ok)"></div></div><span class="mc-pct" style="color:var(--ok)">'+pC.toFixed(1)+'%</span></div>'+
+        '<div class="mc-row"><span class="mc-label">Deve.</span><div class="mc-track"><div class="mc-fill" style="width:'+Math.min(pD,100)+'%;background:var(--accent)"></div></div><span class="mc-pct" style="color:var(--accent)">'+pD.toFixed(1)+'%</span></div>'+
+      '</div>'+
+      '<div style="font-size:.72rem;color:var(--text3);font-family:var(--mono)">PIM: '+fmtS(c.pim)+'</div>'+
+    '</div>';
+  }).join('');
+
+  var pgHtml='';
+  if(totalPages>1){
+    pgHtml+='<button class="pg-btn" '+(page<=1?'disabled':'')+' onclick="goPage('+(page-1)+')">‹</button>';
+    for(var p=1;p<=totalPages;p++){
+      if(p===1||p===totalPages||Math.abs(p-page)<=1) pgHtml+='<button class="pg-btn '+(p===page?'active':'')+'" onclick="goPage('+p+')">'+p+'</button>';
+      else if(Math.abs(p-page)===2) pgHtml+='<span class="pg-info">…</span>';
+    }
+    pgHtml+='<button class="pg-btn" '+(page>=totalPages?'disabled':'')+' onclick="goPage('+(page+1)+')">›</button>';
+    pgHtml+='<span class="pg-info">'+total+' total</span>';
+  }
+  $('meta-pagination').innerHTML=pgHtml;
+}
+function goPage(p){S.metaPage=p;renderMetaTable();}
+
+/* ═══ CLASIFICADORES SIDEBAR ═══ */
+function renderClasifSidebar(list,activeCode){
+  var c=$('clasif-sidebar-inner'); if(!c) return;
+  c.innerHTML=list.map(function(cl){
+    return '<div class="clasif-item'+(cl.clasificador===activeCode?' active':'')+'" onclick="selectClasif(\''+cl.clasificador+'\')" data-code="'+cl.clasificador+'">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">'+
+        '<span class="ci-code">'+cl.clasificador+'</span>'+
+        '<span class="badge '+badgeClass(cl.estado)+'" style="font-size:.56rem">'+cl.estado+'</span>'+
+      '</div>'+
+      '<div class="ci-desc">'+cl.recurso+'</div>'+
+    '</div>';
+  }).join('');
+
+  /* ── Poblar select móvil ── */
+  var sel=$('clasif-mobile-select');
+  if(sel){
+    var prev=sel.value;
+    sel.innerHTML='<option value="">— Selecciona un clasificador —</option>'+
+      list.map(function(cl){
+        var label=cl.clasificador+(cl.recurso?' — '+cl.recurso.substring(0,40):'');
+        return '<option value="'+cl.clasificador+'"'+(cl.clasificador===activeCode?' selected':'')+'>'+label+'</option>';
+      }).join('');
+    if(activeCode) sel.value=activeCode;
+  }
+}
+
+function filterClasif(q){
+  if(!S.metaData) return;
+  var q2=q.toLowerCase();
+  var filtered=S.metaData.clasificadores.filter(function(c){
+    return c.clasificador.toLowerCase().indexOf(q2)>-1||c.recurso.toLowerCase().indexOf(q2)>-1;
+  });
+  renderClasifSidebar(filtered,null);
+}
+
+var _currentClasif=null;
+function selectClasif(code){
+  if(!S.metaData) return;
+  _currentClasif=code;
+  var c=S.metaData.clasificadores.find(function(x){return x.clasificador===code;});
+  if(!c) return;
+
+  // 1. Mostrar skeleton y ocultar estados previos
+  $('clasif-detail-empty').style.display='none';
+  $('clasif-detail').style.display='none';
+  $('clasif-skeleton').style.display='block';
+
+  renderClasifSidebar(S.metaData.clasificadores, code);
+
+  // 2. Simulamos un pequeño delay (300ms) para que el skeleton sea perceptible y la transición sea suave
+  setTimeout(function(){
+    renderClasifDetail(c);
+  }, 300);
+
+  if(!$('page-clasif').classList.contains('active')) navTo('clasif');
+}
+
+/* ═══ DETALLE CLASIFICADOR ═══ */
+function renderClasifDetail(c){
+  // 1. GESTIÓN DE ESTADOS: Ocultamos el skeleton y mostramos el contenedor real
+  $('clasif-skeleton').style.display = 'none';
+  $('clasif-detail-empty').style.display = 'none';
+  $('clasif-detail').style.display = 'block';
+
+  // 2. CÁLCULOS LOGÍSTICOS
+  var pC = c.pim > 0 ? (c.ejeCertTotal / c.pim * 100) : 0;
+  var pD = c.pim > 0 ? (c.ejeDeveTotal / c.pim * 100) : 0;
+  var canFix = (S.perfil && S.perfil.rol !== 'Lector');
+  var estadoLow = (c.estado || '').toLowerCase();
+  var esOk = estadoLow === 'ok';
+  
+  // Determinar la clase de la alerta dinámicamente según el estado
+  var typeAlert = estadoLow === 'eliminar' ? 'err' : (estadoLow === 'observado' ? 'warn' : 'info');
+
+  // 3. CONSTRUCCIÓN DEL BLOQUE DE CABECERA Y ALERTAS
+  var html = '';
+  html += '<div class="card" style="margin-bottom:10px"><div class="card-body">' +
+    '<div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
+      '<span style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)">' + c.clasificador + '</span>' +
+      '<span class="badge ' + badgeClass(c.estado) + '">' + c.estado + '</span>' +
+    '</div>' +
+    '<div style="margin-top:5px;font-size:.8rem;color:var(--text2);font-weight:500;line-height:1.3">' + c.recurso + '</div>' +
+    '<div class="clasif-progress-block" style="margin-top:12px">' +
+      '<div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%;background:var(--ok)"></div></div><span class="prog-pct" style="color:var(--ok)">' + pC.toFixed(1) + '%</span></div>' +
+      '<div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%;background:var(--accent)"></div></div><span class="prog-pct" style="color:var(--accent)">' + pD.toFixed(1) + '%</span></div>' +
+    '</div>' +
+    
+    // --- NUEVO DISEÑO COMPACTO PARA ALERTA INDIVIDUAL (Stitch UI) ---
+    (!esOk && c.observacion ?
+      '<div class="alert alert-' + typeAlert + '" style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; margin-top:16px;" id="clasif-alert-obs">' +
+        '<div style="flex-shrink:0; display:flex;">' +
+          '<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        '</div>' +
+        '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;">' +
+          '<div style="font-size:0.75rem; color:var(--text2); line-height:1.4;">' +
+            '<span class="badge ' + badgeClass(c.estado) + '" style="font-size:0.6rem; padding:2px 6px; margin-right:6px; vertical-align:middle;">' + c.estado + '</span>' +
+            '<strong style="color:var(--text);">' + c.clasificador + '</strong> — ' + c.observacion +
+          '</div>' +
+        '</div>' +
+        (canFix ? 
+          '<div style="flex-shrink:0; margin-left:8px;">' +
+            '<button onclick="solicitarCorrecion(\'' + S.currentMeta + '\', \'' + c.clasificador + '\', \'' + c.observacion.replace(/'/g, "\\'") + '\')" ' +
+                    'title="Marcar como corregido" ' +
+                    'style="background:rgba(34,197,94,0.1); color:#4ADE80; border:1px solid rgba(34,197,94,0.3); border-radius:6px; padding:6px 12px; font-size:0.7rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;" ' +
+                    'onmouseover="this.style.background=\'rgba(34,197,94,0.2)\'" onmouseout="this.style.background=\'rgba(34,197,94,0.1)\'">' +
+              '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+              'Corregir' +
+            '</button>' +
+          '</div>' 
+        : '') +
+      '</div>' 
+    : '') +
+  '</div></div>';
+
+  // 4. BLOQUE DE KPIs
+  html += '<div class="kpi-grid" style="margin-bottom:10px">' +
+    mkKpi('PIM', fmtS(c.pim)) + mkKpi('Meta Física', c.totalFisico + ' meses') +
+    mkKpi('Ejec. Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Ejec. Devengado', fmtS(c.ejeDeveTotal)) +
+  '</div>';
+
+  // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
+  html += '<div class="card" style="margin-bottom:10px">' +
+    '<div class="card-header">' +
+      '<span class="card-title">Programación</span>' +
+      (canFix ? '<button class="btn btn-secondary btn-sm ep-edit-btn" data-code="' + c.clasificador + '">' +
+        '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        'Editar</button>' : '') +
+    '</div>' +
+    '<div class="monthly-wrap"><table class="monthly-table"><thead><tr>' +
+      '<th class="lbl">Concepto</th>' +
+      MESES_C.map(function(m){ return '<th>' + m + '</th>'; }).join('') +
+      '<th>TOTAL</th></tr></thead><tbody>';
+
+  var progRows = [
+    { label: 'CANTIDAD MENSUAL', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
+    { label: 'CERTIFICACIÓN', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ok)' },
+    { label: 'DEVENGADO', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--accent)' },
+  ];
+
+  progRows.forEach(function(row){
+    html += '<tr><td class="lbl" style="color:' + row.color + '">' + row.label + '</td>' +
+      row.data.map(function(v){ return '<td>' + (row.isInt ? fmtI(v) : fmtN(v)) + '</td>'; }).join('') +
+      '<td class="total-col">' + (row.isInt ? fmtI(row.total) : fmtN(row.total)) + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  // 6. TABLA DE EJECUCIÓN REAL (SOLO LECTURA)
+  html += mkMonthlyTable('Ejecución Real', [
+    { label: 'CERT. EJECUTADO', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
+    { label: 'DEVE. EJECUTADO', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
+  ]);
+
+  // 7. INYECCIÓN AL DOM Y REASIGNACIÓN DE EVENTOS
+  var container = $('clasif-detail');
+  container.innerHTML = html;
+
+  var editBtn = container.querySelector('.ep-edit-btn');
+  if(editBtn){
+    editBtn.addEventListener('click', function(){
+      var code = this.getAttribute('data-code');
+      if(code) abrirEditarProg(code);
+    });
+  }
+}
+
+function mkMonthlyTable(title,rows){
+  var h='<div class="card" style="margin-bottom:10px">'+
+    '<div class="card-header"><span class="card-title">'+title+'</span></div>'+
+    '<div class="monthly-wrap"><table class="monthly-table"><thead><tr>'+
+      '<th class="lbl">Concepto</th>'+
+      MESES_C.map(function(m){return '<th>'+m+'</th>';}).join('')+
+      '<th>TOTAL</th></tr></thead><tbody>';
+  rows.forEach(function(row){
+    h+='<tr><td class="lbl" style="color:'+row.color+'">'+row.label+'</td>'+
+      row.data.map(function(v){return '<td>'+(row.isInt?fmtI(v):fmtN(v))+'</td>';}).join('')+
+      '<td class="total-col">'+(row.isInt?fmtI(row.total):fmtN(row.total))+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  return h;
+}
+</script>

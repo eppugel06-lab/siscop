@@ -1,0 +1,51 @@
+<div class="page" id="page-meta">
+  <div class="page-header"><h1>Dashboard por Meta</h1><p>Análisis detallado por Secuencia Funcional</p></div>
+  <div id="meta-no-data" class="alert alert-info">
+    <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Selecciona una meta en el selector superior para ver los datos.
+  </div>
+  <div id="meta-skeleton" style="display:none">
+    <div class="sk-card" style="margin-bottom:12px;height:120px"></div>
+    <div class="kpi-grid"><div class="sk-card" style="height:80px"></div><div class="sk-card" style="height:80px"></div><div class="sk-card" style="height:80px"></div><div class="sk-card" style="height:80px"></div></div>
+    <div class="sk-card" style="height:200px"></div>
+  </div>
+  <div id="meta-content" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:.95rem;font-weight:700;padding:7px 12px;border-radius:8px;flex-shrink:0" id="meta-secfunc-badge">—</div>
+          <div style="flex:1">
+            <div style="font-size:.95rem;font-weight:700;color:var(--text)" id="meta-denom">—</div>
+            <div style="font-size:.75rem;color:var(--text3);margin-top:2px">Unidad de medida: <span id="meta-um" style="font-weight:600;color:var(--text2)">—</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%;background:var(--ok)"></div></div><span class="prog-pct" id="meta-pct-cert" style="color:var(--ok)">0%</span></div>
+          <div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%;background:var(--accent)"></div></div><span class="prog-pct" id="meta-pct-deve" style="color:var(--accent)">0%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-grid" id="meta-kpi-grid" style="margin-bottom:12px"></div>
+    <div id="meta-alerts" style="margin-bottom:12px"></div>
+    <div class="meta-controls">
+      <input type="text" class="search-input" id="meta-search" placeholder="Buscar clasificador o recurso..." oninput="filtrarClasifMeta(this.value)">
+      <select class="pg-select" id="meta-pg-size" onchange="cambiarPgSize(this.value)">
+        <option value="5">5 por página</option>
+        <option value="10" selected>10 por página</option>
+        <option value="20">20 por página</option>
+        <option value="999">Todos</option>
+      </select>
+    </div>
+    <div class="card meta-table-desktop">
+      <div class="card-header"><span class="card-title">Clasificadores de la meta</span><span id="meta-count" style="font-size:.7rem;color:var(--text3);font-family:var(--mono)"></span></div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Clasificador</th><th>Recurso</th><th class="num">PIM</th><th class="num">Ejec Cert</th><th class="num">Ejec Deve</th><th>Estado</th></tr></thead>
+          <tbody id="clasif-tbody-meta"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div id="meta-cards-mobile"></div>
+    <div class="pagination" id="meta-pagination"></div>
+  </div>
+</div>

@@ -1,0 +1,323 @@
+<script>
+/* ═══════════════════════════════════════════════
+   1. GAS ADAPTER & MOCKS (PUENTE BACKEND)
+═══════════════════════════════════════════════ */
+var IS_GAS=(typeof google!=='undefined'&&google.script&&google.script.run);
+var CY=new Date().getFullYear();
+var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+var MESES_C=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SET','OCT','NOV','DIC'];
+
+var MOCK={
+  perfil:{ok:true,perfil:{email:'admin@ugel06.gob.pe',nombre:'Administrador Demo',rol:'Admin',estado:'Activo'},mensaje:'ok'},
+  resumen:{pia:2850000,pim:3120000,pctCert:43.2,pctDeve:38.7,periodo:'Marzo '+CY,procesadoPor:'jlopez@ugel06.gob.pe',procesadoEl:'28/03/'+CY+' 14:32',estadosCount:{ok:87,observado:12,agregar:5,eliminar:3},metas:[{sf:'0001',den:'MEJORAR LOGROS DE APRENDIZAJE',pim:1200000,pctCert:52,pctDeve:48,estado:'Ok'},{sf:'0018',den:'ACCESO A SERVICIOS BÁSICOS',pim:680000,pctCert:31,pctDeve:28,estado:'Observado'},{sf:'0090',den:'REDUCCIÓN DE DESERCIÓN ESCOLAR',pim:540000,pctCert:45,pctDeve:41,estado:'Ok'},{sf:'0121',den:'MEJORA DE RED VIAL ARTICULADA',pim:420000,pctCert:62,pctDeve:57,estado:'Ok'},{sf:'9001',den:'ACCIONES CENTRALES ADMINISTRATIVAS',pim:280000,pctCert:21,pctDeve:18,estado:'Agregar'}]},
+  secFuncList:[{sf:'0001',den:'MEJORAR LOGROS DE APRENDIZAJE'},{sf:'0018',den:'ACCESO A SERVICIOS BÁSICOS'},{sf:'0090',den:'REDUCCIÓN DE DESERCIÓN'},{sf:'0121',den:'MEJORA DE RED VIAL'},{sf:'9001',den:'ACCIONES CENTRALES'}],
+  datosMeta:{secFunc:'0001',denominacion:'MEJORAR LOS LOGROS DE APRENDIZAJE DE ESTUDIANTES DE EDUCACIÓN BÁSICA REGULAR',unidadMedida:'ESTUDIANTE',totales:{pia:1200000,pim:1200000,ejeCert:518400,ejeDeve:475200},estadosCount:{ok:5,observado:2,agregar:1,eliminar:0},clasificadores:[{clasificador:'2.3.1.5.1.2',recurso:'MATERIALES Y ÚTILES DE ENSEÑANZA',estado:'Ok',observacion:'',pia:320000,pim:320000,totalFisico:8,certTotal:138400,deveTotal:121600,ejeCertTotal:138400,ejeDeveTotal:121600,cantM:[1,1,1,1,0,0,1,1,1,1,0,0],certM:[40000,40000,40000,18400,0,0,0,0,0,0,0,0],deveM:[35000,35000,35000,16600,0,0,0,0,0,0,0,0],ejeCertM:[40000,40000,40000,18400,0,0,0,0,0,0,0,0],ejeDeveM:[35000,35000,35000,16600,0,0,0,0,0,0,0,0]},{clasificador:'2.3.2.7.1.1',recurso:'PASAJES Y GASTOS DE TRANSPORTE',estado:'Observado',observacion:'AO difiere: TRANSPORTE TERRESTRE',pia:180000,pim:180000,totalFisico:6,certTotal:38700,deveTotal:36500,ejeCertTotal:38700,ejeDeveTotal:36500,cantM:[1,1,0,1,0,0,1,1,0,1,0,0],certM:[13000,12900,0,12800,0,0,0,0,0,0,0,0],deveM:[12200,12300,0,12000,0,0,0,0,0,0,0,0],ejeCertM:[13000,12900,0,12800,0,0,0,0,0,0,0,0],ejeDeveM:[12200,12300,0,12000,0,0,0,0,0,0,0,0]},{clasificador:'2.3.1.1.1.1',recurso:'PAPELERÍA Y MATERIALES DE OFICINA',estado:'Agregar',observacion:'Agregado desde DEVENGADO.',pia:95000,pim:95000,totalFisico:4,certTotal:23800,deveTotal:21500,ejeCertTotal:23800,ejeDeveTotal:21500,cantM:[1,0,1,0,0,0,1,0,1,0,0,0],certM:[8000,0,8000,7800,0,0,0,0,0,0,0,0],deveM:[7200,0,7200,7100,0,0,0,0,0,0,0,0],ejeCertM:[8000,0,8000,7800,0,0,0,0,0,0,0,0],ejeDeveM:[7200,0,7200,7100,0,0,0,0,0,0,0,0]}]},
+  auditLog:[{ts:''+CY+'-03-28T14:32:00',user:'jlopez@ugel06.gob.pe',mesCorte:2,duracion:127,ok:true,resumen:{ok:87,observado:12,agregar:5,eliminar:3},error:''},{ts:''+CY+'-02-27T10:15:00',user:'mgarcia@ugel06.gob.pe',mesCorte:1,duracion:134,ok:true,resumen:{ok:84,observado:15,agregar:3,eliminar:5},error:''},{ts:''+CY+'-01-30T16:48:00',user:'jlopez@ugel06.gob.pe',mesCorte:0,duracion:118,ok:false,resumen:{ok:0,observado:0,agregar:0,eliminar:0},error:'Error de prueba'}],
+  exportLog:[{ts:''+CY+'-03-28T15:00:00',user:'jlopez@ugel06.gob.pe',tipo:'completo',filas:248,fileName:'SISCOP_CONSOLIDADO_COMPLETO_'+CY+'-03.xlsx'},{ts:''+CY+'-03-28T14:45:00',user:'admin@ugel06.gob.pe',tipo:'observados',filas:20,fileName:'SISCOP_OBSERVADOS_'+CY+'-03.xlsx'}],
+  precheck:{sisplan:{tieneData:true,filas:248},devengado:{tieneData:true,filas:312},certificado:{tieneData:true,filas:248}},
+  usuarios:{ok:true,usuarios:[{email:'jlopez@ugel06.gob.pe',nombre:'Juan López',rol:'Especialista',estado:'Activo',ultimoAcceso:'28/03/'+CY+' 14:32'},{email:'mgarcia@ugel06.gob.pe',nombre:'María García',rol:'Lector',estado:'Activo',ultimoAcceso:'27/03/'+CY+' 10:15'}]}
+};
+
+function gasCall(fn,args,ok,err){
+  if(!IS_GAS){
+    setTimeout(function(){
+      var r={obtenerPerfilUsuario:MOCK.perfil,getResumenGeneral:MOCK.resumen,getSecFuncList:MOCK.secFuncList,
+        getDatosSecFunc:MOCK.datosMeta,getAuditLog:MOCK.auditLog,getExportLog:MOCK.exportLog,
+        inspectFileMonths:{lastMonthWithData:2,missingCols:[],totalRows:248},
+        uploadAndSaveToSheet:{rows:248,sheet:args&&args[2]||'',warnings:[]},
+        ejecutarConsolidado:{ok:true,etapas:[{nombre:'SISPLAN importado',duracion:22},{nombre:'DEVENGADO importado',duracion:38},{nombre:'PIA/PIM/Devengado',duracion:28},{nombre:'Certificado',duracion:19},{nombre:'Programación',duracion:20}],resumen:{ok:87,observado:12,agregar:5,eliminar:3},duracion:127},
+        exportConsolidado:{url:'#mock',fileName:'SISCOP_DEMO.xlsx',rows:248},
+        verificarHojasPrecargadas:MOCK.precheck,
+        obtenerListaUsuarios:MOCK.usuarios,
+        registrarNuevoUsuario:{ok:true,mensaje:'Usuario creado (demo)'},
+        cambiarEstadoUsuario:{ok:true,mensaje:'Actualizado'},
+        editarUsuario:{ok:true,mensaje:'Actualizado'},
+        eliminarUsuario:{ok:true,mensaje:'Eliminado'},
+        reenviarCorreoBienvenida:{ok:true,mensaje:'Correo enviado (demo)'},
+        marcarObservacionCorregida:{ok:true,cambiados:1,mensaje:'Estado actualizado'},
+        actualizarCantMensual:{ok:true,mensaje:'Programación actualizada (demo)',totalFisico:args&&args[2]?args[2].reduce(function(a,b){return a+b;},0):0}
+      };
+      if(ok) ok(r[fn]||null);
+    },IS_GAS?0:500);
+    return;
+  }
+  var c=google.script.run.withSuccessHandler(ok);
+  if(err) c=c.withFailureHandler(err);
+  if(args&&args.length) c[fn].apply(c,args);
+  else c[fn]();
+}
+
+/* ═══════════════════════════════════════════════
+   2. ESTADO GLOBAL (STORE)
+═══════════════════════════════════════════════ */
+var S={
+  perfil:null, currentMeta:null, metaData:null, metaFiltered:[], metaPage:1, metaPageSize:10,
+  dashMetaFiltered:[], dashMetaPage:1, dashMetaPageSize:10, 
+  filesLoaded:{sisplan:false,devengado:false,certificado:false},
+  filesData:{sisplan:null,devengado:null,certificado:null},
+  filesNew:{sisplan:false,devengado:false,certificado:false},
+  precheck:{sisplan:{tieneData:false},devengado:{tieneData:false},certificado:{tieneData:false}},
+  mesCorte:null, procesando:false, processed:false,
+  historialData:[], exportLogData:[], resumen: null
+};
+
+/* ═══════════════════════════════════════════════
+   3. HELPERS DE INTERFAZ Y FORMATEO
+═══════════════════════════════════════════════ */
+function $(id){return document.getElementById(id);}
+function fmtS(v){return 'S/ '+fmtD(v);}
+function fmtD(v){return (Number(v)||0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});}
+function fmtN(v){return (Number(v)||0).toFixed(2);}
+function fmtI(v){return Math.round(Number(v)||0).toString();}
+function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') return 'ok';if(l.indexOf('observ')>-1) return 'obs';if(l.indexOf('agr')>-1) return 'add';if(l.indexOf('elim')>-1) return 'del';return 'none';}
+function setTitle(sub){document.title='SG';}
+var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};
+
+/* ── TEMA OSCURO/CLARO ── */
+function toggleTheme(){
+  var html=document.documentElement;
+  var isDark=html.classList.contains('dark');
+  if(isDark){
+    html.classList.remove('dark');
+    html.classList.add('light');
+    localStorage.setItem('SISCOP-theme','light');
+  } else {
+    html.classList.remove('light');
+    html.classList.add('dark');
+    localStorage.setItem('SISCOP-theme','dark');
+  }
+  _syncThemeIcons();
+}
+function _syncThemeIcons(){
+  var isDark=document.documentElement.classList.contains('dark');
+  var moon=$('ico-moon'), sun=$('ico-sun');
+  if(moon) moon.style.display=isDark?'none':'';
+  if(sun)  sun.style.display=isDark?'':'none';
+}
+
+/* ── SISTEMA DE TOASTS (NOTIFICACIONES) ── */
+var _toastIco={ok:'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',err:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warn:'<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>',info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'};
+function toast(msg,type,dur){
+  type=type||'ok'; dur=dur||4000;
+  var el=document.createElement('div');
+  el.className='toast t-'+type;
+  el.innerHTML=(_toastIco[type]||'')+' <span class="toast-msg">'+msg+'</span>';
+  $('toast-container').appendChild(el);
+  setTimeout(function(){el.style.cssText+='opacity:0;transform:translateY(6px);transition:.2s';setTimeout(function(){el.remove();},220);},dur);
+}
+
+/* ── CONSOLA LOG ── */
+function logLine(msg,type){
+  var n=new Date(), ts=n.toTimeString().slice(0,8);
+  var el=document.createElement('div'); el.className='log-line';
+  el.innerHTML='<span class="lt">'+ts+'</span><span class="lm '+(type||'info')+'">'+msg+'</span>';
+  $('log-inner').appendChild(el);
+  $('log-inner').scrollTop=9999;
+}
+function logClear(){$('log-inner').innerHTML='';}
+function setLogProgress(t){$('log-progress').textContent=t;}
+
+/* ═══════════════════════════════════════════════
+   4. SISTEMA DE NAVEGACIÓN Y ROUTER
+═══════════════════════════════════════════════ */
+var PAGE_TITLES={upload:'Cargar Insumos',dashboard:'Dashboard General',meta:'Por Meta',clasif:'Clasificadores',export:'Exportar',historial:'Historial',historico:'Histórico de Periodos',usuarios:'Gestión de Usuarios'};
+var PAGE_ICONS = {
+  upload:    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  meta:      '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  clasif:    '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  export:    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  historial: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  historico: '<path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/>',
+  usuarios:  '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+};
+ 
+/**
+ * Navegador Principal (Router)
+ * Gestiona el intercambio de vistas, actualización de UI y triggers de datos.
+ * @param {string} page - El ID de la página destino (ej: 'dashboard', 'meta').
+ */
+// Actualizamos navTo para mayor seguridad
+function navTo(page){
+  // VALIDACIÓN DE SEGURIDAD PARA LECTOR
+  if(S.perfil && S.perfil.rol === 'Lector'){
+    var prohibidas = ['upload', 'export', 'historial', 'usuarios'];
+    if(prohibidas.indexOf(page) > -1){
+      toast('No tienes permisos para acceder a esta sección', 'warn');
+      // Si intenta entrar a una prohibida, lo forzamos al dashboard
+      if(page !== 'dashboard') { navTo('dashboard'); return; }
+    }
+  }
+
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  
+  var pg = $('page-' + page); 
+  if (pg) pg.classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'" + page + "'") > -1) {
+      b.classList.add('active');
+    }
+  });
+  
+  $('topbar-title').textContent = PAGE_TITLES[page] || page;
+  
+  var iconEl = $('topbar-section-icon');
+  if (iconEl){
+    var d = PAGE_ICONS[page] || '';
+    iconEl.innerHTML = '<svg viewBox="0 0 24 24">' + d + '</svg>';
+  }
+  
+  setTitle(PAGE_TITLES[page] || page);
+  closeSidebar();
+  
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'historial')  loadHistorial();
+  if (page === 'export')     loadExportLog();
+  if (page === 'historico')  loadHistorico();
+}
+
+function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').classList.toggle('open',$('sidebar').classList.contains('open'));}
+function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').classList.remove('open');}
+
+/* ── MANEJO GENÉRICO DE MODALES ── */
+function cerrarModal(id){$(id).classList.remove('active');}
+function abrirModal(id){$(id).classList.add('active');}
+
+/* ═══════════════════════════════════════════════
+   5. SISTEMA DE SEGURIDAD Y SESIÓN
+═══════════════════════════════════════════════ */
+function iniciarSeguridad(){
+  _syncThemeIcons();
+  setTitle('Verificando acceso...');
+  
+  gasCall('obtenerPerfilUsuario',[],function(res){
+    if(!res||!res.ok){
+      $('global-loader').style.display='none';
+      $('access-denied').style.display='flex';
+      return;
+    }
+    
+    S.perfil = res.perfil;
+    adaptarInterfazAlRol(); // <--- Aquí dentro se llama a navTo('dashboard')
+    
+    // Ocultamos el loader con una transición suave después de que navTo ya hizo su trabajo
+    setTimeout(function(){
+      $('global-loader').style.opacity='0';
+      setTimeout(function(){ $('global-loader').style.display='none'; }, 350);
+    }, 500);
+
+    iniciarInactividad();
+    verificarPrecheck();
+    _cargarPeriodoInicial();
+
+  }, function(err){
+    $('global-loader').style.display='none';
+    $('access-denied').style.display='flex';
+  });
+}
+
+function adaptarInterfazAlRol(){
+  var p = S.perfil;
+  $('ui-user-name').textContent = p.nombre;
+  $('ui-user-role').textContent = p.rol;
+  $('ui-avatar').textContent = p.nombre.charAt(0).toUpperCase();
+
+  if(p.rol === 'Lector'){
+    // 1. Ocultar sección de Proceso completa (Label + Botón Cargar)
+    if($('nav-sec-proceso')) $('nav-sec-proceso').style.display = 'none';
+    
+    // 2. Ocultar botón de Exportar del menú
+    if($('nav-export')) $('nav-export').style.display = 'none';
+    
+    // 3. Ocultar Historial de Procesos (ya estaba)
+    if($('nav-historial')) $('nav-historial').style.display = 'none';
+    
+    // (Opcional) Mantener las protecciones visuales dentro de la vista si llegara a entrar
+    ['ec-completo','ec-observados','ec-meta','ec-csv'].forEach(function(id){
+      var el=$(id); if(!el) return;
+      el.classList.add('ec-disabled');
+      el.onclick=null;
+    });
+  }
+
+  if(p.rol === 'Admin'){
+    if($('nav-sec-admin')) $('nav-sec-admin').style.display = 'block';
+    cargarTablaUsuarios();
+  }
+  
+  loadMetaSelect();
+  navTo('dashboard'); // Redirigir siempre al dashboard al inicio
+}
+
+function _cargarPeriodoInicial() {
+  gasCall('obtenerPeriodos', [], function(res) {
+    if (!res || !res.ok || !res.periodos || res.periodos.length === 0) {
+      var anioActual = new Date().getFullYear();
+      $('sb-periodo-anio').textContent = anioActual;
+      return;
+    }
+    _periodos = res.periodos;
+
+    var anioActual = res.anioActual || new Date().getFullYear();
+
+    var periodoDefault =
+      (res.periodoActivoSsId
+        ? _periodos.find(function(p) { return p.ssId === res.periodoActivoSsId; })
+        : null) ||
+      _periodos.find(function(p) { return p.periodo === anioActual; }) ||
+      _periodos[0];
+
+    if (periodoDefault) {
+      _periodoActivo = periodoDefault;
+      $('sb-periodo-anio').textContent = periodoDefault.periodo;
+      $('sb-periodo').textContent = periodoDefault.mesCorte >= 0
+        ? MESES[periodoDefault.mesCorte] + ' ' + periodoDefault.periodo
+        : 'Sin proceso';
+      gasCall('cambiarPeriodoActivo', [periodoDefault.ssId, periodoDefault.periodo], null, null);
+    }
+  }, null);
+}
+
+/* ── TRACKING DE INACTIVIDAD (30 min) ── */
+var _inactTimer;
+function iniciarInactividad(){
+  var ms=30*60*1000;
+  function reset(){clearTimeout(_inactTimer);_inactTimer=setTimeout(bloquear,ms);}
+  ['mousemove','keypress','click','touchstart'].forEach(function(e){document.addEventListener(e,reset,{passive:true});});
+  reset();
+}
+function bloquear(){
+  $('app').style.filter='blur(10px)';
+  var d=$('access-denied');
+  
+  d.querySelector('h1').textContent='Sesión Bloqueada';
+  d.querySelector('.denied-icon').innerHTML='<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+  $('denied-message').innerHTML='<b>30 minutos de inactividad.</b><br>Los datos han sido ocultados por seguridad.';
+  
+  var btn=d.querySelector('button'); 
+  btn.textContent='Recargar sesión'; 
+  
+  // ✨ SOLUCIÓN PRO: Reinicio en caliente (Soft Reload)
+  btn.onclick = function() {
+    btn.textContent = 'Verificando...'; // Feedback visual rápido
+    btn.disabled = true;                // Evitamos doble clic
+    
+    // 1. Quitamos el bloqueo visual
+    $('app').style.filter = 'none';
+    d.style.display = 'none';
+    
+    // 2. Volvemos a disparar el flujo principal como si recién abriera la app
+    iniciarSeguridad();
+    
+    // Restauramos el botón por si se vuelve a bloquear en el futuro
+    setTimeout(function(){ 
+      btn.textContent = 'Recargar sesión'; 
+      btn.disabled = false; 
+    }, 2000);
+  };
+  
+  d.style.display='flex';
+}
+</script>

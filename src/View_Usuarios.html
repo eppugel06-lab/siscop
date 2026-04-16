@@ -1,0 +1,44 @@
+<div class="page" id="page-usuarios">
+  <div class="page-header"><h1>Gestión de Usuarios</h1><p>Administra accesos y roles del SISCOP</p></div>
+  <div style="display:grid;grid-template-columns:1fr;gap:16px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Registrar nuevo colaborador</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Correo Google / Workspace</label><input type="email" id="u-email" class="input-control" placeholder="usuario@ugel06.gob.pe"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Nombre o especialidad</label><input type="text" id="u-nombre" class="input-control" placeholder="Ej. Juan Pérez"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Rol</label>
+            <select id="u-rol" class="input-control">
+              <option value="Especialista">Especialista (puede procesar)</option>
+              <option value="Lector">Lector (solo visualizar)</option>
+              <option value="Admin">Administrador (control total)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="crearNuevoUsuario()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Crear y enviar bienvenida
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Usuarios registrados</span>
+        <button class="btn btn-ghost btn-sm" onclick="cargarTablaUsuarios()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap users-table-desktop">
+          <table>
+            <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th style="text-align:center">Acción</th></tr></thead>
+            <tbody id="tabla-usuarios-body"><tr><td colspan="5" style="text-align:center;padding:20px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div id="usuarios-cards-mobile" style="padding:10px 14px 4px;display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<div class="page" id="page-historial">
+  <div class="page-header">
+    <div>
+      <h1 style="margin:0;">Historial de Procesos</h1>
+      <p style="margin:4px 0 0;">Registro de ejecuciones del consolidado</p>
+    </div>
+    <button onclick="exportarHistorialExcel()" class="btn btn-primary" style="display:flex; align-items:center; gap:8px; height:fit-content;">
+      <svg viewBox="0 0 24 24" style="width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar XLSX
+    </button>
+  </div>
+  <div class="hist-filters">
+    <input type="text" id="hist-filter-user" placeholder="Filtrar por usuario..." oninput="filtrarHistorial()">
+    <select id="hist-filter-mes" onchange="filtrarHistorial()">
+      <option value="">Todos los meses</option>
+      <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+      <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+      <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Setiembre</option>
+      <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+    </select>
+  </div>
+  <div id="historial-empty" class="alert alert-info" style="display:none">
+    <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    No hay ejecuciones registradas.
+  </div>
+  <div id="hist-skeleton" style="display:none">
+    <div class="sk-card" style="margin-bottom:10px;height:80px"></div>
+    <div class="sk-card" style="margin-bottom:10px;height:80px"></div>
+    <div class="sk-card" style="margin-bottom:10px;height:80px"></div>
+  </div>
+  <div class="timeline" id="timeline-wrap" style="display:none"></div>
+</div>

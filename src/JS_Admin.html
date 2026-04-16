@@ -1,0 +1,530 @@
+<script>
+/* ═══ EXPORTAR ═══ */
+function exportar(tipo){
+  if(S.perfil&&S.perfil.rol==='Lector'){toast('Sin permisos para exportar','err');return;}
+  if(tipo==='meta'&&!S.currentMeta){toast('Selecciona una meta primero','warn');return;}
+  toast('Generando archivo...','info',2000);
+  var filtro={tipo:tipo,sf:S.currentMeta};
+  gasCall('exportConsolidado',[filtro],function(r){
+    if(r&&r.url&&r.url!=='#'&&r.url!=='#mock') window.open(r.url,'_blank');
+    else if(!IS_GAS) toast('Demo: '+r.fileName,'info',5000);
+    else toast('Archivo: '+r.fileName,'ok',6000);
+    loadExportLog();
+  },function(err){toast('Error: '+err.message,'err');});
+}
+
+// REEMPLAZAR EN JS_Admin.html
+
+function loadExportLog(){
+  // PRIMERO: Pintamos las tarjetas de exportación (Consolidado y CSV)
+  renderExportCards(); 
+  
+  // SEGUNDO: Cargamos el historial de descargas desde el servidor
+  gasCall('getExportLog',[30],function(data){
+    S.exportLogData=data||[];
+    var tbody=$('export-log-tbody');
+    var cardsEl=$('export-log-cards');
+    
+    if(!data||data.length===0){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Sin exportaciones registradas.</td></tr>';
+      if(cardsEl) cardsEl.innerHTML='<div style="padding:16px;text-align:center;font-size:.78rem;color:var(--text3)">Sin exportaciones registradas.</div>';
+      return;
+    }
+    
+    var rows=data.map(function(r){
+      var d=new Date(r.ts);
+      var dt=isNaN(d.getTime())?r.ts:(d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2));
+      return {fileName:r.fileName,tipo:r.tipo,user:r.user,filas:r.filas,dt:dt};
+    });
+
+    /* Tabla desktop */
+    tbody.innerHTML=rows.map(function(r){
+      return '<tr>'+
+        '<td class="code" style="color:var(--text)">'+r.fileName+'</td>'+
+        '<td><span class="badge none">'+r.tipo+'</span></td>'+
+        '<td style="font-size:.74rem">'+r.user+'</td>'+
+        '<td class="num">'+r.filas+'</td>'+
+        '<td style="font-size:.72rem;color:var(--text3);font-family:var(--mono)">'+r.dt+'</td>'+
+      '</tr>';
+    }).join('');
+
+    /* Cards móvil */
+    if(cardsEl){
+      cardsEl.innerHTML=rows.map(function(r){
+        return '<div class="export-log-card">'+
+          '<div class="elc-filename">'+r.fileName+'</div>'+
+          '<div class="elc-row"><span class="elc-label">Tipo</span><span class="badge none" style="font-size:.6rem">'+r.tipo+'</span></div>'+
+          '<div class="elc-row"><span class="elc-label">Usuario</span><span class="elc-val">'+r.user+'</span></div>'+
+          '<div class="elc-row"><span class="elc-label">Filas</span><span class="elc-val">'+r.filas+'</span></div>'+
+          '<div class="elc-row"><span class="elc-label">Fecha</span><span class="elc-val">'+r.dt+'</span></div>'+
+        '</div>';
+      }).join('');
+    }
+    _syncExportLogView();
+  },null);
+}
+
+function _syncExportLogView(){
+  var isMobile=window.innerWidth<=640;
+  var tableWrap=document.querySelector('.export-log-table-desktop');
+  var cardsEl=$('export-log-cards');
+  if(tableWrap) tableWrap.style.display=isMobile?'none':'block';
+  if(cardsEl)   cardsEl.style.display=isMobile?'block':'none';
+}
+
+function renderExportCards(){
+  var grid = $('export-grid');
+  if (!grid) return;
+  var isLector = S.perfil && S.perfil.rol === 'Lector';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px';
+  grid.innerHTML =
+    '<div class="export-card-big' + (isLector ? ' ec-disabled' : '') + '" id="ec-completo" onclick="' + (isLector ? '' : "exportar('completo')") + '">' +
+      '<div class="ecb-icon" style="background:linear-gradient(135deg,#1B4FD8,#3B82F6)">' +
+        '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="15" x2="12" y2="3"/><polyline points="7 10 12 15 17 10"/></svg>' +
+      '</div>' +
+      '<div>' +
+        '<div class="ecb-title">Consolidado Completo</div>' +
+        '<div class="ecb-desc">Descarga todas las filas del consolidado con programación, ejecución y estados de conciliación.</div>' +
+        '<div class="ecb-meta">Formato XLSX · Hoja CONSOLIDADO completa</div>' +
+        (isLector ? '<div class="ec-lock"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sin permisos de descarga</div>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="export-card-big' + (isLector ? ' ec-disabled' : '') + '" id="ec-csv" onclick="' + (isLector ? '' : "exportar('csv')") + '">' +
+      '<div class="ecb-icon" style="background:linear-gradient(135deg,#059669,#10B981)">' +
+        '<svg viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>' +
+      '</div>' +
+      '<div>' +
+        '<div class="ecb-title">Exportar CSV</div>' +
+        '<div class="ecb-desc">Exportación en formato CSV para importar directamente en SIAF, SIGA u otros sistemas del MEF.</div>' +
+        '<div class="ecb-meta">Separador coma · Encoding UTF-8</div>' +
+        (isLector ? '<div class="ec-lock"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sin permisos de descarga</div>' : '') +
+      '</div>' +
+    '</div>';
+}
+
+/* ═══ HISTÓRICO DE PERIODOS ═══ */
+var _periodos = [];
+var _periodoActivo = null;
+
+/* ═══ HISTÓRICO DE PERIODOS (CON CACHÉ) ═══ */
+function loadHistorico() {
+  // 1. CHEQUEO DE CACHÉ: Si ya cargamos los periodos antes, los mostramos de inmediato
+  if (_periodos && _periodos.length > 0) {
+    $('hist-skeleton-periodos').style.display = 'none';
+    $('hist-periodos-lista').style.display = 'block';
+    if (_periodoActivo) $('hist-periodo-activo-card').style.display = 'block';
+    
+    renderPeriodosLista(); 
+    
+    // Opcional: Si quieres que se actualice en segundo plano sin molestar al usuario, 
+    // puedes dejar que la llamada gasCall siga su curso abajo.
+  } else {
+    // 2. PRIMERA CARGA: Si no hay datos, sí mostramos el skeleton
+    $('hist-skeleton-periodos').style.display = 'block';
+    $('hist-periodos-lista').style.display = 'none';
+    $('hist-empty').style.display = 'none';
+    $('hist-periodo-activo-card').style.display = 'none';
+  }
+
+  // 3. LLAMADA AL SERVIDOR (Se ejecuta siempre para asegurar sincronía)
+  gasCall('obtenerPeriodos', [], function(res) {
+    // Apagamos el skeleton pase lo que pase al recibir respuesta
+    $('hist-skeleton-periodos').style.display = 'none';
+
+    if (!res || !res.ok) {
+      // Si la caché falló y no hay datos nuevos, mostramos error
+      if (!_periodos || _periodos.length === 0) {
+        toast('Error cargando periodos: ' + (res ? res.mensaje : ''), 'err');
+      }
+      return;
+    }
+
+    _periodos = res.periodos || [];
+    
+    // Solo mostramos el botón si no es Lector
+    if (S.perfil && S.perfil.rol !== 'Lector') {
+      $('btn-nuevo-periodo').style.display = '';
+    }
+
+    if (_periodos.length === 0) {
+      $('hist-empty').style.display = 'flex';
+      $('hist-periodos-lista').style.display = 'none';
+    } else {
+      $('hist-empty').style.display = 'none';
+      $('hist-periodos-lista').style.display = 'block';
+      renderPeriodosLista();
+      
+      // Actualizar la tarjeta del periodo activo
+      if (_periodoActivo) {
+        $('hist-periodo-activo-card').style.display = 'block';
+        $('hist-activo-anio').textContent   = _periodoActivo.periodo;
+        $('hist-activo-nombre').textContent = _periodoActivo.nombre;
+        $('hist-activo-corte').textContent  = _periodoActivo.mesCorte >= 0 
+          ? MESES[_periodoActivo.mesCorte] + ' ' + _periodoActivo.periodo 
+          : 'Sin proceso';
+      }
+    }
+  }, function(err) {
+    $('hist-skeleton-periodos').style.display = 'none';
+    if (!_periodos || _periodos.length === 0) toast('Error: ' + err.message, 'err');
+  });
+}
+
+function renderPeriodosLista() {
+  var grid = $('hist-periodos-grid');
+  grid.innerHTML = _periodos.map(function(p, idx) {
+    var esActivo = _periodoActivo && _periodoActivo.periodo === p.periodo;
+    return '<div class="periodo-card' + (esActivo ? ' pc-activo' : '') + '" onclick="seleccionarPeriodoPorIdx(' + idx + ')">' +
+      '<div class="pc-anio">' + p.periodo + '</div>' +
+      '<div class="pc-info"><div class="pc-nombre">' + p.nombre + '</div><div class="pc-meta">Corte: ' + (p.mesCorte >= 0 ? MESES[p.mesCorte] : 'Sin proceso') + '</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function seleccionarPeriodoPorIdx(idx) {
+  var p = _periodos[idx];
+  if (p) seleccionarPeriodo(p);
+}
+
+function seleccionarPeriodo(p) {
+  if (_periodoActivo && _periodoActivo.periodo === p.periodo) return;
+
+  toast('Cambiando al periodo ' + p.periodo + '...', 'info', 2000);
+  
+  // 1. Informamos al servidor del cambio de Spreadsheet ID
+  gasCall('cambiarPeriodoActivo', [p.ssId, p.periodo], function(res) {
+    if (!res || !res.ok) {
+      toast('Error al cambiar periodo: ' + (res ? res.mensaje : ''), 'err');
+      return;
+    }
+
+    // 2. Actualizamos el estado local sin recargar la página
+    _periodoActivo = p;
+    S.resumen = null;     // Limpiamos caché para forzar recarga de datos
+    S.metaData = null;
+    S.currentMeta = null;
+
+    // 3. Actualizamos la interfaz (Sidebar y Badge)
+    $('sb-periodo-anio').textContent = p.periodo;
+    $('sb-periodo').textContent = p.mesCorte >= 0 
+      ? MESES[p.mesCorte] + ' ' + p.periodo 
+      : 'Sin proceso';
+
+    renderPeriodosLista(); // Refresca la lista de la vista histórico
+
+    // 4. RESET DE VISTAS: Mandamos al usuario al Dashboard con los nuevos datos
+    toast('Periodo ' + p.periodo + ' cargado correctamente', 'ok', 3000);
+    
+    // Recargamos el selector de metas y vamos al dashboard
+    loadMetaSelect();
+    navTo('dashboard'); 
+
+  }, function(err) {
+    toast('Error de conexión: ' + err.message, 'err');
+  });
+}
+
+function abrirModalNuevoPeriodo() {
+  $('np-anio').value = '';
+  $('np-preview').style.display = 'none';
+  abrirModal('modal-nuevo-periodo');
+}
+
+function confirmarNuevoPeriodo() {
+  var anio = parseInt($('np-anio').value, 10);
+  if (!anio || anio < 2020 || anio > 2040) return;
+  gasCall('agregarNuevoPeriodo', [anio], function(res) {
+    if (res.ok) { cerrarModal('modal-nuevo-periodo'); loadHistorico(); }
+  }, null);
+}
+
+/* ═══ USUARIOS ═══ */
+/* ═══ GESTIÓN DE USUARIOS: CARGA DE TABLA ═══ */
+function cargarTablaUsuarios(){
+  var tbody=$('tabla-usuarios-body');
+  var cardsEl=$('usuarios-cards-mobile');
+  
+  // Loader inicial
+  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px"><div class="spinner"></div></td></tr>';
+  
+  gasCall('obtenerListaUsuarios',[],function(res){
+    if(!res.ok){ toast(res.mensaje,'err'); return; }
+    
+    var usuarios = res.usuarios;
+    if(!usuarios || usuarios.length === 0){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Sin usuarios registrados.</td></tr>';
+      return;
+    }
+
+    // Renderizado de la Tabla (Desktop)
+    tbody.innerHTML = usuarios.map(function(u){
+      var isMe = S.perfil && u.email.toLowerCase() === S.perfil.email.toLowerCase();
+      var isSuper = u.email.toLowerCase() === 'epp.ugel06@gmail.com'; // Cuenta protegida
+      var ec = u.estado === 'Activo' ? 'ok' : 'del';
+      
+      var btns = '';
+      if(!isMe && !isSuper){
+        var nEst = u.estado === 'Activo' ? 'Inactivo' : 'Activo';
+        
+        // Botón Editar
+        btns += '<button class="action-btn edit" title="Editar" onclick="abrirEdicion(\''+u.email+'\',\''+u.nombre+'\',\''+u.rol+'\')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+        
+        // Botón Reenviar Correo
+        btns += '<button class="action-btn mail" title="Reenviar bienvenida" onclick="reenviarCorreoU(\''+u.email+'\',\''+u.nombre+'\',\''+u.rol+'\')"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>';
+        
+        // Botón Estado (Play/Stop)
+        btns += '<button class="action-btn" title="'+(u.estado==='Activo'?'Suspender':'Activar')+'" onclick="cambiarEstadoU(\''+u.email+'\',\''+nEst+'\')"><svg viewBox="0 0 24 24">'+(u.estado==='Activo'?'<rect x="9" y="9" width="6" height="6"/><circle cx="12" cy="12" r="10"/>':'<polygon points="5 3 19 12 5 21 5 3"/>')+'</svg></button>';
+        
+        // Botón Eliminar
+        btns += '<button class="action-btn del" title="Eliminar permanentemente" onclick="confirmarEliminacion(\''+u.email+'\')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      } else {
+        btns = '<span style="font-size:.68rem;color:var(--text3);padding-right:8px">' + (isMe ? 'Mi cuenta' : 'Sistema') + '</span>';
+      }
+
+      return '<tr>' +
+        '<td><div style="font-weight:600;color:var(--text)">'+u.nombre+'</div><div style="font-size:.68rem;color:var(--text3);font-family:var(--mono)">'+u.email+'</div></td>' +
+        '<td><span class="badge none">'+u.rol+'</span></td>' +
+        '<td><span class="badge '+ec+'">'+u.estado+'</span></td>' +
+        '<td style="font-size:.72rem;color:var(--text2)">'+tiempoRelativo(u.ultimoAcceso)+'</td>' +
+        '<td style="text-align:right;white-space:nowrap">'+btns+'</td>' +
+      '</tr>';
+    }).join('');
+
+    // Sincronizar con vista móvil si es necesario
+    if (cardsEl) _renderUsuariosCards(usuarios, cardsEl);
+    _syncUsuariosView();
+
+  }, function(err){ toast('Error: '+err.message, 'err'); });
+}
+
+// Función auxiliar para las tarjetas en móvil
+function _renderUsuariosCards(usuarios, container) {
+  container.innerHTML = usuarios.map(function(u){
+    var inicial = u.nombre.charAt(0).toUpperCase();
+    var ec = u.estado === 'Activo' ? 'ok' : 'del';
+    return '<div class="user-card">' +
+      '<div class="uc-top">' +
+        '<div class="uc-avatar">'+inicial+'</div>' +
+        '<div class="uc-info"><div class="uc-name">'+u.nombre+'</div><div class="uc-email">'+u.email+'</div></div>' +
+      '</div>' +
+      '<div class="uc-badges"><span class="badge none">'+u.rol+'</span><span class="badge '+ec+'">'+u.estado+'</span></div>' +
+    '</div>';
+  }).join('');
+}
+
+function _syncUsuariosView(){
+  var isMobile=window.innerWidth<=640;
+  var tableWrap=document.querySelector('.users-table-desktop');
+  var cardsEl=$('usuarios-cards-mobile');
+  if(tableWrap) tableWrap.style.display=isMobile?'none':'block';
+  if(cardsEl)   cardsEl.style.display=isMobile?'block':'none';
+}
+
+function tiempoRelativo(r){
+  if(!r||r==='Nunca') return 'Nunca';
+  var f=new Date(r); if(isNaN(f.getTime())) return r;
+  var s=Math.max(0,Math.round((new Date()-f)/1000));
+  if(s<60) return 'Hace un momento';
+  if(s<3600) return 'Hace ' + Math.floor(s/60) + ' min';
+  return f.toLocaleDateString();
+}
+
+function crearNuevoUsuario(){
+  var email = $('u-email').value.trim();
+  var nombre = $('u-nombre').value.trim();
+  var rol = $('u-rol').value;
+  if(!email || !nombre) return;
+  gasCall('registrarNuevoUsuario',[email, nombre, rol],function(res){
+    if(res.ok) { cargarTablaUsuarios(); $('u-email').value=''; $('u-nombre').value=''; }
+  },null);
+}
+
+function abrirEdicion(email, nombre, rol){
+  $('me-email-original').value = email;
+  $('me-email').value = email;
+  $('me-nombre').value = nombre;
+  $('me-rol').value = rol;
+  abrirModal('modal-edit-user');
+}
+
+function guardarEdicionUsuario(){
+  var email = $('me-email-original').value;
+  var nombre = $('me-nombre').value.trim();
+  var rol = $('me-rol').value;
+  cerrarModal('modal-edit-user');
+  gasCall('editarUsuario',[email, nombre, rol],function(res){
+    if(res.ok) cargarTablaUsuarios();
+  },null);
+}
+
+function cambiarEstadoU(email, nuevoEstado){
+  gasCall('cambiarEstadoUsuario',[email, nuevoEstado, null],function(res){
+    if(res.ok) cargarTablaUsuarios();
+  },null);
+}
+
+function confirmarEliminacion(email){
+  $('mc-title').textContent = 'Eliminar Usuario';
+  $('mc-message').innerHTML = '¿Eliminar acceso a <b>' + email + '</b>?';
+  $('mc-btn-ok').onclick = function(){
+    cerrarModal('modal-confirm');
+    gasCall('eliminarUsuario',[email],function(res){ if(res.ok) cargarTablaUsuarios(); },null);
+  };
+  abrirModal('modal-confirm');
+}
+
+function reenviarCorreoU(email, nombre, rol){
+  gasCall('reenviarCorreoBienvenida',[email, nombre, rol],function(res){ if(res.ok) toast('Enviado','ok'); },null);
+}
+
+/* ═══ LISTENERS ═══ */
+window.addEventListener('resize', function(){
+  _syncExportLogView();
+  _syncUsuariosView();
+},{ passive:true });
+
+/* ═══ HISTORIAL DE PROCESOS (NUEVO) ═══ */
+
+var S_historialData = [];     // Guarda todos los datos originales del servidor
+var S_historialFiltered = []; // Guarda los datos después de aplicar los filtros
+
+// 1. FUNCIÓN DE ARRANQUE (Renombrada a loadHistorial para que tu menú la detecte automáticamente)
+function loadHistorial() {
+  var emptyEl = $('historial-empty');
+  var timelineEl = $('timeline-wrap');
+  var skeletonEl = $('hist-skeleton');
+  
+  if(emptyEl) emptyEl.style.display = 'none';
+  if(timelineEl) timelineEl.style.display = 'none';
+  if(skeletonEl) skeletonEl.style.display = 'block';
+  
+  // Limpiar filtros por defecto
+  if($('hist-filter-user')) $('hist-filter-user').value = '';
+  if($('hist-filter-mes')) $('hist-filter-mes').value = '';
+
+  // Llamada al backend
+  gasCall('obtenerHistorialProcesos', [], function(datos) {
+    if(skeletonEl) skeletonEl.style.display = 'none';
+    
+    S_historialData = datos || [];
+    
+    if (S_historialData.length === 0) {
+      if(emptyEl) emptyEl.style.display = 'flex';
+      return;
+    }
+    
+    // Si hay datos, disparamos la función de filtrado
+    filtrarHistorial();
+
+  }, function(err) {
+    if(skeletonEl) skeletonEl.style.display = 'none';
+    toast('Error al cargar historial: ' + err.message, 'err');
+  });
+}
+
+// 2. FUNCIÓN DE FILTRADO
+function filtrarHistorial() {
+  if (!S_historialData || S_historialData.length === 0) return;
+
+  var strUser = $('hist-filter-user') ? $('hist-filter-user').value.toLowerCase().trim() : '';
+  var valMes = $('hist-filter-mes') ? $('hist-filter-mes').value : ''; 
+
+  S_historialFiltered = S_historialData.filter(function(row) {
+    var matchUser = true;
+    if (strUser !== '') {
+      matchUser = row.usuario.toLowerCase().indexOf(strUser) > -1 || 
+                  row.rol.toLowerCase().indexOf(strUser) > -1 ||
+                  row.modulo.toLowerCase().indexOf(strUser) > -1;
+    }
+
+    var matchMes = true;
+    if (valMes !== '') {
+      // Extraemos el mes de la fecha "dd/MM/yyyy HH:mm:ss"
+      var mesDelRegistro = parseInt(row.fecha.substring(3, 5), 10) - 1;
+      matchMes = (mesDelRegistro === parseInt(valMes, 10));
+    }
+
+    return matchUser && matchMes;
+  });
+
+  renderTimelineHistorial();
+}
+
+// 3. FUNCIÓN DE RENDERIZADO VISUAL
+function renderTimelineHistorial() {
+  var wrap = $('timeline-wrap');
+  if(!wrap) return;
+  
+  if (S_historialFiltered.length === 0) {
+    wrap.style.display = 'none';
+    if($('historial-empty')) $('historial-empty').style.display = 'flex';
+    return;
+  }
+
+  if($('historial-empty')) $('historial-empty').style.display = 'none';
+  wrap.style.display = 'block';
+
+  wrap.innerHTML = S_historialFiltered.map(function(row) {
+    var isErr = row.estado === 'ERROR';
+    var isWarn = row.estado === 'WARN';
+    var colorHex = isErr ? '#ef4444' : (isWarn ? '#f59e0b' : '#10b981'); 
+    var bgHex = isErr ? 'rgba(239, 68, 68, 0.1)' : (isWarn ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)');
+    var icono = isErr ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 
+                (isWarn ? 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' : 
+                          'M5 13l4 4L19 7'); 
+    
+    return '' +
+      '<div class="tl-item" style="position:relative; padding-left:40px; margin-bottom:24px;">' +
+        '<div style="position:absolute; left:15px; top:30px; bottom:-30px; width:2px; background:var(--border);"></div>' +
+        '<div style="position:absolute; left:0; top:0; width:32px; height:32px; border-radius:50%; background:'+bgHex+'; color:'+colorHex+'; display:flex; align-items:center; justify-content:center; border:2px solid var(--surface); z-index:2;">' +
+          '<svg viewBox="0 0 24 24" style="width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;"><path d="'+icono+'"/></svg>' +
+        '</div>' +
+        '<div class="card" style="padding:16px; margin:0;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; flex-wrap:wrap; gap:8px;">' +
+            '<div style="font-weight:700; color:var(--text); font-size:1rem;">' + row.accion + '</div>' +
+            '<span class="badge" style="background:'+bgHex+'; color:'+colorHex+'; font-weight:700;">' + row.estado + '</span>' +
+          '</div>' +
+          '<div style="font-size:0.85rem; color:var(--text2); margin-bottom:12px; line-height:1.5;">' + row.detalle + '</div>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.75rem; color:var(--text3); font-family:var(--mono); border-top:1px dashed var(--border); padding-top:12px;">' +
+            '<span style="display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" style="width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ' + row.fecha + '</span>' +
+            '<span style="display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" style="width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + row.usuario + ' (' + row.rol + ')</span>' +
+            '<span style="display:flex; align-items:center; gap:4px; color:var(--accent);"><svg viewBox="0 0 24 24" style="width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + row.modulo + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// 4. EXPORTAR A EXCEL
+function exportarHistorialExcel() {
+  if (!S_historialFiltered || S_historialFiltered.length === 0) {
+    toast('No hay datos para exportar', 'warn');
+    return;
+  }
+  toast('Generando archivo Excel...', 'info');
+  try {
+    var datosParaExcel = S_historialFiltered.map(function(r) {
+      return {
+        "Fecha": r.fecha,
+        "Usuario": r.usuario,
+        "Módulo": r.modulo,
+        "Acción": r.accion,
+        "Detalle": r.detalle,
+        "Estado": r.estado
+      };
+    });
+    var ws = XLSX.utils.json_to_sheet(datosParaExcel);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historial");
+    
+    ws['!cols'] = [{wch: 20}, {wch: 30}, {wch: 15}, {wch: 25}, {wch: 50}, {wch: 10}];
+    
+    var nombreArchivo = "Historial_SISCOP_" + new Date().getTime() + ".xlsx";
+    XLSX.writeFile(wb, nombreArchivo);
+    toast('¡Excel descargado!', 'ok');
+  } catch(e) {
+    console.error(e);
+    toast('Error al generar Excel', 'err');
+  }
+}
+</script>

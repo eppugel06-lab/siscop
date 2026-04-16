@@ -1,0 +1,237 @@
+<div id="global-loader">
+  <div class="loader-logo">
+    <div class="ll-icon"><span>SG</span></div>
+    <div class="ll-name">SISCOP</div>
+    <div class="ll-sub">Sistema de Gestión y Ejecución Presupuestal</div>
+  </div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+  <div class="loader-text" id="loader-text">Verificando credenciales...</div>
+</div>
+
+<div id="access-denied">
+  <div class="denied-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:10px">Acceso Denegado</h1>
+  <p id="denied-message" style="color:var(--text2);max-width:380px;line-height:1.6">No tienes permisos para acceder al SISCOP.</p>
+  <button class="btn btn-secondary" style="margin-top:20px" onclick="window.open('https://accounts.google.com/Logout','_blank')">Cambiar cuenta de Google</button>
+</div>
+
+<div id="toast-container"></div>
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div class="modal-overlay" id="modal-procesar">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:var(--brand-soft)">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--brand);fill:none;stroke-width:2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        Confirmar Procesamiento
+      </div>
+      <button class="btn-ghost btn-sm" onclick="cerrarModal('modal-procesar')" style="padding:4px">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:14px">Esta acción <strong style="color:var(--text)">sobreescribirá el consolidado actual</strong>. Revisa los insumos que se usarán:</p>
+      <div id="mp-insumos"></div>
+      <div id="mp-mes-info" style="margin-top:12px;padding:10px 12px;background:var(--accent-dim);border-radius:8px;font-size:.78rem;color:var(--add-text)">
+        <strong>Mes de corte:</strong> <span id="mp-mes-nombre">—</span>
+        <span style="display:block;margin-top:2px;font-size:.7rem;opacity:.8">Aplica a Devengado y Certificado</span>
+      </div>
+      <div class="alert alert-warn" style="margin-top:12px;margin-bottom:0">
+        <svg class="alert-ico" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Los datos del consolidado anterior serán reemplazados.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-procesar')">Cancelar</button>
+      <button class="btn btn-primary" id="mp-btn-confirm" onclick="confirmarProcesar()">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Confirmar y Procesar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box">
+    <div class="modal-header" id="mc-title">Confirmar</div>
+    <div class="modal-body"><p id="mc-message" style="color:var(--text2);font-size:.85rem"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-confirm')">Cancelar</button>
+      <button class="btn btn-danger" id="mc-btn-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-obs-fix">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:var(--ok-bg)">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ok);fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        Marcar como Corregido
+      </div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px">¿Confirmas que la siguiente observación ya fue corregida en el sistema?</p>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:.72rem;color:var(--text3);margin-bottom:4px;font-family:var(--mono)" id="obs-fix-clasif">—</div>
+        <div style="font-size:.8rem;color:var(--text);font-weight:500" id="obs-fix-detalle">—</div>
+      </div>
+      <div class="alert alert-ok" style="margin-bottom:0">
+        <svg class="alert-ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Si confirmas, el estado cambiará a <strong>Ok</strong> y la observación será eliminada.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-obs-fix')">Cancelar</button>
+      <button class="btn btn-primary" id="obs-fix-btn" style="background:var(--ok)">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Sí, marcar como corregido
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-user">
+  <div class="modal-box">
+    <div class="modal-header">Editar Usuario</div>
+    <div class="modal-body">
+      <input type="hidden" id="me-email-original">
+      <div class="form-group">
+        <label class="form-label">Correo (no modificable)</label>
+        <input type="text" id="me-email" class="input-control" disabled style="opacity:.6">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre o especialidad</label>
+        <input type="text" id="me-nombre" class="input-control">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Rol en el sistema</label>
+        <select id="me-rol" class="input-control">
+          <option value="Especialista">Especialista</option>
+          <option value="Lector">Lector</option>
+          <option value="Admin">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-edit-user')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionUsuario()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Programación -->
+<div class="modal-overlay" id="modal-edit-prog">
+  <div class="modal-box xl">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:var(--accent-dim)">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        Editar Programación
+      </div>
+      <button class="btn-ghost btn-sm" onclick="cerrarModal('modal-edit-prog')" style="padding:4px">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:14px 16px">
+      <div style="font-size:.76rem;color:var(--text2);margin-bottom:12px">
+        Modifica la <strong style="color:var(--text)">Cantidad Mensual</strong> — solo valores <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:var(--mono)">0</code> o <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:var(--mono)">1</code>. La programación se recalculará automáticamente.
+      </div>
+      <div id="ep-clasif-info" style="margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:.76rem;color:var(--text2)"></div>
+      <div class="table-wrap">
+        <table class="monthly-table" id="ep-table">
+          <thead><tr>
+            <th class="lbl">Concepto</th>
+            <th>ENE</th><th>FEB</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th>
+            <th>JUL</th><th>AGO</th><th>SET</th><th>OCT</th><th>NOV</th><th>DIC</th>
+            <th>TOTAL</th>
+          </tr></thead>
+          <tbody id="ep-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ep-preview" style="margin-top:12px;padding:10px 12px;background:var(--accent-dim);border-radius:8px;display:none">
+        <div style="font-size:.7rem;color:var(--add-text);font-weight:700;margin-bottom:6px">Vista previa recálculo:</div>
+        <div id="ep-preview-content" style="font-size:.72rem;color:var(--add-text);font-family:var(--mono)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-edit-prog')">Cancelar</button>
+      <button class="btn btn-secondary" onclick="epRecalcularPreview()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Recalcular
+      </button>
+      <button class="btn btn-primary" onclick="epConfirmarGuardar()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar Cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo Periodo -->
+<div class="modal-overlay" id="modal-nuevo-periodo">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:var(--brand-soft)">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--brand);fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        Crear nuevo periodo
+      </div>
+      <button class="btn-ghost btn-sm" onclick="cerrarModal('modal-nuevo-periodo')" style="padding:4px">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:14px">
+        <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Se creará una copia del Sheets actual con estructura vacía (solo encabezados) en tu carpeta Drive del SISCOP.</span>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Año fiscal</label>
+        <input type="number" id="np-anio" class="input-control" placeholder="Ej. 2025" min="2020" max="2040" style="font-size:1.1rem;font-weight:700;font-family:var(--mono);text-align:center">
+      </div>
+      <div id="np-preview" style="display:none;margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:.78rem;color:var(--text2)">
+        Se creará: <strong id="np-preview-nombre" style="color:var(--text)">—</strong>
+      </div>
+      <div id="np-alert" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-nuevo-periodo')">Cancelar</button>
+      <button class="btn btn-primary" id="np-btn-crear" onclick="confirmarNuevoPeriodo()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crear periodo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Edición Programación -->
+<div class="modal-overlay" id="modal-confirm-prog">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:var(--obs-bg)">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--obs);fill:none;stroke-width:2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        Confirmar Edición
+      </div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:10px">¿Guardar los cambios en la programación del clasificador?</p>
+      <div id="mcp-detail" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.76rem;color:var(--text2)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-confirm-prog');abrirModal('modal-edit-prog')">Volver</button>
+      <button class="btn btn-primary" id="mcp-btn-ok">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirmar y Guardar
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,13 @@
+{
+  "name": "siscop-ugel",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "build": "node build.js && npm run clasp-push",
+    "clasp-push": "clasp push -f"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "jest": "^30.3.0"
+  }
+}

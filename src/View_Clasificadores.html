@@ -1,0 +1,39 @@
+<div class="page" id="page-clasif">
+  <div class="page-header"><h1>Detalle de Clasificador</h1><p>Programación y ejecución mensual por clasificador</p></div>
+  <div id="clasif-no-meta" class="alert alert-info">
+    <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Selecciona una meta primero para ver sus clasificadores.
+  </div>
+  <div id="clasif-layout-wrap" style="display:none">
+    <div id="clasif-mobile-select-wrap">
+      <select id="clasif-mobile-select" onchange="if(this.value) selectClasif(this.value)">
+        <option value="">— Selecciona un clasificador —</option>
+      </select>
+    </div>
+    <div id="clasif-layout">
+      <div id="clasif-sidebar-panel">
+        <div style="padding:9px 9px 6px;border-bottom:1px solid var(--border)">
+          <input type="text" id="clasif-search" placeholder="Buscar..." oninput="filterClasif(this.value)"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.74rem;color:var(--text);outline:none">
+        </div>
+        <div id="clasif-sidebar-inner"></div>
+      </div>
+      <div id="clasif-main">
+        <div id="clasif-detail-empty" style="padding:40px;text-align:center;color:var(--text3);font-size:.82rem">← Selecciona un clasificador</div>
+        
+        <div id="clasif-skeleton" style="display:none">
+          <div class="sk-card" style="height:120px;margin-bottom:12px"></div>
+          <div class="kpi-grid" style="margin-bottom:12px">
+            <div class="sk-card" style="height:80px"></div>
+            <div class="sk-card" style="height:80px"></div>
+            <div class="sk-card" style="height:80px"></div>
+            <div class="sk-card" style="height:80px"></div>
+          </div>
+          <div class="sk-card" style="height:180px"></div>
+        </div>
+
+        <div id="clasif-detail" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>

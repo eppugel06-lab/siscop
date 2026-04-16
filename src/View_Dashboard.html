@@ -1,0 +1,98 @@
+<div class="page" id="page-dashboard">
+  
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div>
+      <h1 style="margin:0; font-size:1.5rem; letter-spacing:-0.5px;">Dashboard General</h1>
+      <p style="margin:4px 0 0; color:var(--text3); font-size:0.85rem;">Vista ejecutiva — UGEL 06 VITARTE</p>
+    </div>
+
+    <div id="dash-periodo-badge" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:7px;box-shadow:var(--shadow)">
+      <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:var(--accent);fill:none;stroke-width:2;flex-shrink:0">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span id="dash-periodo-txt">Cargando periodo...</span>
+    </div>
+  </div>
+
+  <div id="dash-skeleton" style="display:none">
+    <div class="kpi-grid">
+      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
+      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
+      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
+      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
+    </div>
+    <div class="sk-card" style="height:200px; margin-top:20px;"></div>
+  </div>
+
+  <div id="dash-content">
+    
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">PIA Total</div><div class="kpi-val" id="kpi-pia">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">PIM Total</div><div class="kpi-val" id="kpi-pim">—</div></div>
+      
+      <div class="kpi-card">
+        <div class="kpi-label">Certificación</div><div class="kpi-val" id="kpi-cert">—</div>
+        <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-cert" style="width:0%"></div></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Devengado</div><div class="kpi-val" id="kpi-deve">—</div>
+        <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-deve" style="width:0%"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-header" style="flex-direction:column; align-items:stretch; gap:16px;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <span class="card-title" style="font-size: 1rem; font-weight:700;">
+            Metas Presupuestales 
+            <span id="dash-meta-count" style="font-size:.75rem;color:var(--text3);font-family:var(--mono);font-weight:normal;margin-left:8px;background:var(--surface2);padding:2px 8px;border-radius:12px;"></span>
+          </span>
+          
+          <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom: 0; padding: 0; background: transparent; border: none;">
+            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" title="Filtrar metas sin observaciones"><span id="res-ok-count">0</span> Ok</button>
+            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" title="Filtrar metas con diferencias de AO/UM"><span id="res-obs-count">0</span> Obs</button>
+            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" title="Filtrar clasificadores nuevos detectados"><span id="res-add-count">0</span> Add</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" title="Filtrar ítems que ya no figuran en Devengado"><span id="res-del-count">0</span> Del</button>
+            
+            <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none;" title="Quitar filtros">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="meta-controls" style="margin-bottom:0">
+          <input type="text" class="search-input" id="dash-meta-search" placeholder="Buscar por SEC_FUNC o denominación..." oninput="filtrarDashMetas(this.value)">
+          <select class="pg-select" id="dash-meta-pg-size" onchange="cambiarDashPgSize(this.value)">
+            <option value="5">5 por página</option>
+            <option value="10" selected>10 por página</option>
+            <option value="20">20 por página</option>
+            <option value="999">Todos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap dash-meta-table-desktop">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th class="sortable" data-col="sf" onclick="sortDashMeta('sf')">SEC_FUNC <span class="sort-icon"></span></th>
+                <th>Denominación</th>
+                <th class="num sortable" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
+                <th style="min-width:120px;">Estados (Insumos)</th>
+              </tr>
+            </thead>
+            <tbody id="metas-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="dash-meta-cards-mobile" style="padding:10px 14px 0"></div>
+
+        <div class="pagination" id="dash-meta-pagination" style="padding:12px; border-top:1px solid var(--border);"></div>
+      </div>
+    </div>
+  </div>
+</div>
