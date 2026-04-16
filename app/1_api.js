@@ -5,7 +5,7 @@
 // Función delegada a Frontend Web Worker / Parser Offline
 
 // ─── 1.2 SUBIR ARCHIVO ────────────────────────────────────────────────────────
-function uploadAndSaveToSheet(base64, fileName, sheetTarget) {
+function uploadAndSaveToSheet(base64, sheetTarget) {
   try {
     var perfil = obtenerPerfilUsuario();
     if (!perfil.ok) throw new Error('ACCESO DENEGADO: '+perfil.mensaje);

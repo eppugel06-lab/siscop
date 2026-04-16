@@ -28,13 +28,13 @@
     
     <div class="kpi-grid" id="kpi-grid">
       <div class="kpi-card"><div class="kpi-label">PIA Total</div><div class="kpi-val" id="kpi-pia">—</div></div>
-      <div class="kpi-card"><div class="kpi-label">PIM Total</div><div class="kpi-val" id="kpi-pim">—</div></div>
+      <div class="kpi-card hide-on-pia"><div class="kpi-label">PIM Total</div><div class="kpi-val" id="kpi-pim">—</div></div>
       
-      <div class="kpi-card">
+      <div class="kpi-card hide-on-pia">
         <div class="kpi-label">Certificación</div><div class="kpi-val" id="kpi-cert">—</div>
         <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-cert" style="width:0%"></div></div></div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card hide-on-pia">
         <div class="kpi-label">Devengado</div><div class="kpi-val" id="kpi-deve">—</div>
         <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-deve" style="width:0%"></div></div></div>
       </div>
@@ -79,9 +79,9 @@
               <tr>
                 <th class="sortable" data-col="sf" onclick="sortDashMeta('sf')">SEC_FUNC <span class="sort-icon"></span></th>
                 <th>Denominación</th>
-                <th class="num sortable" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
-                <th class="num sortable" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
-                <th class="num sortable" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
+                <th class="num sortable hide-on-pia" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
+                <th class="num sortable hide-on-pia" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
+                <th class="num sortable hide-on-pia" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
                 <th style="min-width:120px;">Estados (Insumos)</th>
               </tr>
             </thead>

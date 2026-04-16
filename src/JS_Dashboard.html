@@ -15,19 +15,27 @@ function loadDashboard(){
 }
 
 function renderDashboardData(d) {
+  var isPIA = d.pim === 0 && d.pia > 0;
+  if(isPIA) document.body.classList.add('is-pia');
+  else document.body.classList.remove('is-pia');
+
+  if(isPIA && document.getElementById('kpi-pia-title')) document.getElementById('kpi-pia-title').textContent = "PIA Proyectado";
+
   $('dash-skeleton').style.display='none';
   $('dash-content').style.display='block';
   $('kpi-pia').textContent=fmtS(d.pia);
-  $('kpi-pim').textContent=fmtS(d.pim);
-  $('kpi-cert').textContent=d.pctCert.toFixed(1)+'%';
-  $('kpi-deve').textContent=d.pctDeve.toFixed(1)+'%';
-  setTimeout(function(){
-    var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
-    $('bar-cert').style.width=pC+'%';
-    $('bar-cert').className='kpi-bar-fill '+(pC>=80?'fill-green':pC>=50?'fill-amber':'fill-red');
-    $('bar-deve').style.width=pD+'%';
-    $('bar-deve').className='kpi-bar-fill '+(pD>=80?'fill-green':pD>=50?'fill-amber':'fill-blue');
-  },100);
+  if(!isPIA) {
+    $('kpi-pim').textContent=fmtS(d.pim);
+    $('kpi-cert').textContent=d.pctCert.toFixed(1)+'%';
+    $('kpi-deve').textContent=d.pctDeve.toFixed(1)+'%';
+    setTimeout(function(){
+      var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
+      $('bar-cert').style.width=pC+'%';
+      $('bar-cert').className='kpi-bar-fill '+(pC>=80?'fill-green':pC>=50?'fill-amber':'fill-red');
+      $('bar-deve').style.width=pD+'%';
+      $('bar-deve').className='kpi-bar-fill '+(pD>=80?'fill-green':pD>=50?'fill-amber':'fill-blue');
+    },100);
+  }
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
@@ -164,9 +172,9 @@ function renderDashMetaTable(){
     return '<tr onclick="selectMeta(\''+m.sf+'\')" style="cursor:pointer">'+
       '<td class="code">'+m.sf+'</td>'+
       '<td class="den-cell" title="'+denEsc+'">'+m.den+'</td>'+
-      '<td class="num">'+fmtS(m.pim)+'</td>'+
-      '<td class="num"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
-      '<td class="num"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
+      '<td class="num hide-on-pia">'+fmtS(m.pim)+'</td>'+
+      '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
+      '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
       '<td>'+badges+'</td>'+
     '</tr>';
   }).join('');
@@ -187,9 +195,9 @@ function renderDashMetaTable(){
           badges+
         '</div>'+
         '<div class="dmc-den">'+m.den+'</div>'+
-        '<div class="dmc-row"><span class="dmc-label">Certificado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pC+'%;background:'+cC+'"></div></div><span class="dmc-pct" style="color:'+cC+'">'+m.pctCert+'%</span></div>'+
-        '<div class="dmc-row"><span class="dmc-label">Devengado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pD+'%;background:'+cD+'"></div></div><span class="dmc-pct" style="color:'+cD+'">'+m.pctDeve+'%</span></div>'+
-        '<div class="dmc-footer"><span class="dmc-pim">PIM: '+fmtS(m.pim)+'</span></div>'+
+        '<div class="dmc-row hide-on-pia"><span class="dmc-label">Certificado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pC+'%;background:'+cC+'"></div></div><span class="dmc-pct" style="color:'+cC+'">'+m.pctCert+'%</span></div>'+
+        '<div class="dmc-row hide-on-pia"><span class="dmc-label">Devengado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pD+'%;background:'+cD+'"></div></div><span class="dmc-pct" style="color:'+cD+'">'+m.pctDeve+'%</span></div>'+
+        '<div class="dmc-footer"><span class="dmc-pim hide-on-pia">PIM: '+fmtS(m.pim)+'</span></div>'+
       '</div>';
     }).join('');
   }
@@ -252,6 +260,13 @@ function loadMetaSelect(){
 }
 function onMetaChange(sf){if(!sf) return;S.currentMeta=sf;loadMetaData(sf);}
 function selectMeta(sf){S.currentMeta=sf;$('meta-select').value=sf;loadMetaData(sf);navTo('meta');}
+function clearMetaViews(){
+  var mS=$('meta-select'); if(mS)mS.value='';
+  if($('meta-content')) $('meta-content').style.display='none';
+  if($('meta-no-data')) $('meta-no-data').style.display='flex';
+  if($('clasif-layout-wrap')) $('clasif-layout-wrap').style.display='none';
+  if($('clasif-no-meta')) $('clasif-no-meta').style.display='flex';
+}
 
 /* ═══ DATOS META ═══ */
 function loadMetaData(sf){
@@ -276,10 +291,12 @@ function loadMetaData(sf){
       $('meta-pct-deve').textContent=pD.toFixed(1)+'%';
     },100);
     $('meta-kpi-grid').innerHTML=
-      mkKpi('PIM',fmtS(d.totales.pim))+
-      mkKpi('Ejec. Certificado',fmtS(d.totales.ejeCert),pC.toFixed(1)+'%','fill-green')+
-      mkKpi('Ejec. Devengado',fmtS(d.totales.ejeDeve),pD.toFixed(1)+'%','fill-blue')+
-      mkKpi('Clasificadores',d.clasificadores.length.toString());
+      document.body.classList.contains('is-pia') 
+      ? mkKpi('PIA Proyectado',fmtS(d.totales.pia)) + mkKpi('Clasificadores',d.clasificadores.length.toString())
+      : mkKpi('PIM',fmtS(d.totales.pim))+
+        mkKpi('Ejec. Certificado',fmtS(d.totales.ejeCert),pC.toFixed(1)+'%','fill-green')+
+        mkKpi('Ejec. Devengado',fmtS(d.totales.ejeDeve),pD.toFixed(1)+'%','fill-blue')+
+        mkKpi('Clasificadores',d.clasificadores.length.toString());
     renderMetaAlerts(d.clasificadores);
     renderClasifSidebar(d.clasificadores,null);
     renderMetaTable();
@@ -461,9 +478,10 @@ function renderMetaTable(){
       '<td class="code" style="color:var(--text3)">'+(start+i+1)+'</td>'+
       '<td class="code">'+c.clasificador+'</td>'+
       '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.recurso+'</td>'+
-      '<td class="num">'+fmtS(c.pim)+'</td>'+
-      '<td class="num">'+fmtS(c.ejeCertTotal)+'</td>'+
-      '<td class="num">'+fmtS(c.ejeDeveTotal)+'</td>'+
+      '<td class="num hide-on-pia">'+fmtS(c.pim)+'</td>'+
+      '<td class="num hide-on-pia">'+fmtS(c.ejeCertTotal)+'</td>'+
+      '<td class="num hide-on-pia">'+fmtS(c.ejeDeveTotal)+'</td>'+
+      '<td class="num show-on-pia" style="display:none">'+fmtS(c.pia)+'</td>'+
       '<td><span class="badge '+badgeClass(c.estado)+'">'+c.estado+'</span></td>'+
     '</tr>';
   }).join('');
@@ -578,7 +596,7 @@ function renderClasifDetail(c){
       '<span class="badge ' + badgeClass(c.estado) + '">' + c.estado + '</span>' +
     '</div>' +
     '<div style="margin-top:5px;font-size:.8rem;color:var(--text2);font-weight:500;line-height:1.3">' + c.recurso + '</div>' +
-    '<div class="clasif-progress-block" style="margin-top:12px">' +
+    '<div class="clasif-progress-block hide-on-pia" style="margin-top:12px">' +
       '<div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%;background:var(--ok)"></div></div><span class="prog-pct" style="color:var(--ok)">' + pC.toFixed(1) + '%</span></div>' +
       '<div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%;background:var(--accent)"></div></div><span class="prog-pct" style="color:var(--accent)">' + pD.toFixed(1) + '%</span></div>' +
     '</div>' +
@@ -611,9 +629,10 @@ function renderClasifDetail(c){
   '</div></div>';
 
   // 4. BLOQUE DE KPIs
+  var isPIA = document.body.classList.contains('is-pia');
   html += '<div class="kpi-grid" style="margin-bottom:10px">' +
-    mkKpi('PIM', fmtS(c.pim)) + mkKpi('Meta Física', c.totalFisico + ' meses') +
-    mkKpi('Ejec. Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Ejec. Devengado', fmtS(c.ejeDeveTotal)) +
+    mkKpi(isPIA?'PIA':'PIM', fmtS(isPIA?c.pia:c.pim)) + mkKpi('Meta Física', c.totalFisico + ' meses') +
+    (isPIA?'':mkKpi('Ejec. Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Ejec. Devengado', fmtS(c.ejeDeveTotal))) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
@@ -643,10 +662,12 @@ function renderClasifDetail(c){
   html += '</tbody></table></div></div>';
 
   // 6. TABLA DE EJECUCIÓN REAL (SOLO LECTURA)
-  html += mkMonthlyTable('Ejecución Real', [
-    { label: 'CERT. EJECUTADO', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
-    { label: 'DEVE. EJECUTADO', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
-  ]);
+  if(!isPIA) {
+    html += mkMonthlyTable('Ejecución Real', [
+      { label: 'CERT. EJECUTADO', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
+      { label: 'DEVE. EJECUTADO', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
+    ]);
+  }
 
   // 7. INYECCIÓN AL DOM Y REASIGNACIÓN DE EVENTOS
   var container = $('clasif-detail');

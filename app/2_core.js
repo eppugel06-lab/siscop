@@ -41,7 +41,8 @@ function _CORE_IMPORTAR_DEVENGADO(ss) {
   // 1. LIMPIEZA: Quitamos `progs` que buscaba los meses de programación en el Devengado
   var d = {
     ue: _idx(encO, 'UNIDAD_EJECUTORA'), sf: _idx(encO, 'SEC_FUNC'), um: _idx(encO, 'UNIDAD_MEDIDA'),
-    cl: _idx(encO, 'CLASIFICADOR'), cld: _idx(encO, 'CLASIFICADOR_DETALLE'), act: _idx(encO, 'ACTIV_OBRA_ACCINV')
+    cl: _idx(encO, 'CLASIFICADOR'), cld: _idx(encO, 'CLASIFICADOR_DETALLE'), act: _idx(encO, 'ACTIV_OBRA_ACCINV'),
+    pia: _idx(encO, 'MTO_PIA'), pim: _idx(encO, 'MTO_PIM')
   };
   
   var c = {
@@ -63,12 +64,18 @@ function _CORE_IMPORTAR_DEVENGADO(ss) {
     var cl = String(f[d.cl]).replace(/\s+/g, '');
     var act = String(f[d.act] || ''), umR = String(f[d.um] || ''), det = String(f[d.cld] || '');
     
+    var pia=_n(f[d.pia]);
+    var pim=_n(f[d.pim]);
+    
     // 2. LIMPIEZA: Ya no sumamos los "cants" en base al Devengado. Inicializamos en 0.
-    devMap[sf + '|' + cl] = {
+    if (!devMap[sf + '|' + cl]) devMap[sf + '|' + cl] = { 
       denom: act.indexOf('.') >= 0 ? act.substring(act.indexOf('.') + 1).trim() : act.trim(),
       um: umR.indexOf('.') >= 0 ? umR.substring(umR.indexOf('.') + 1).trim() : umR.trim(),
-      rec: det.indexOf(' ') >= 0 ? det.substring(det.indexOf(' ') + 1).trim() : det.trim()
+      rec: det.indexOf(' ') >= 0 ? det.substring(det.indexOf(' ') + 1).trim() : det.trim(),
+      pia: 0, pim: 0
     };
+    devMap[sf + '|' + cl].pia += pia;
+    devMap[sf + '|' + cl].pim += pim;
   }
   
   var estadosCols = [], obsCols = [], clavesExist = [];
@@ -114,7 +121,9 @@ function _CORE_IMPORTAR_DEVENGADO(ss) {
   var filasNuevas = [];
   Object.keys(devMap).forEach(function (clave) {
     if (!clavesExist[clave]) {
-      var dev = devMap[clave], p = clave.split('|');
+      var dev = devMap[clave];
+      if (dev.pia === 0 && dev.pim === 0) return;
+      var p = clave.split('|');
       var fila = new Array(encD.length).fill('');
       fila[c.denom] = dev.denom; fila[c.um] = dev.um; fila[c.sf] = p[0]; fila[c.cl] = p[1];
       fila[c.rec] = dev.rec; 
@@ -314,20 +323,57 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
   var hC=_getHoja(ss,CONFIG.hojas.consolidado);
   var enc=_getEnc(hC,CONFIG.filasEnc.consolidado);
   var idx={
+    sf:_idx(enc,'SEC_FUNC'),
     pia:_idx(enc,'MTO_PIA'),
+    pim:_idx(enc,'MTO_PIM'),
+    tCe:_idx(enc,'TOTAL_EJEC_CERTIF'),
+    tDe:_idx(enc,'TOTAL_EJEC_DEV'),
     cants:CONFIG.mesesCants.map(function(n){return _idx(enc,n);}),
     cMs:['CERT_ENE','CERT_FEB','CERT_MAR','CERT_ABR','CERT_MAY','CERT_JUN','CERT_JUL','CERT_AGO','CERT_SET','CERT_OCT','CERT_NOV','CERT_DIC'].map(function(n){return _idx(enc,n);}),
     cTot:_idx(enc,'TOTAL_CERTIF_PROG'),
     dMs:['DEVE_ENE','DEVE_FEB','DEVE_MAR','DEVE_ABR','DEVE_MAY','DEVE_JUN','DEVE_JUL','DEVE_AGO','DEVE_SET','DEVE_OCT','DEVE_NOV','DEVE_DIC'].map(function(n){return _idx(enc,n);}),
     dTot:_idx(enc,'TOTAL_DEV_PROG'),
     eCeMs:['EJE_CERT_ENE','EJE_CERT_FEB','EJE_CERT_MAR','EJE_CERT_ABR','EJE_CERT_MAY','EJE_CERT_JUN','EJE_CERT_JUL','EJE_CERT_AGO','EJE_CERT_SET','EJE_CERT_OCT','EJE_CERT_NOV','EJE_CERT_DIC'].map(function(n){return _idx(enc,n);}),
-    eDeMs:['EJE_DEVE_ENE','EJE_DEVE_FEB','EJE_DEVE_MAR','EJE_DEVE_ABR','EJE_DEVE_MAY','EJE_DEVE_JUN','EJE_DEVE_JUL','EJE_DEVE_AGO','EJE_DEVE_SET','EJE_DEVE_OCT','EJE_DEVE_NOV','EJE_DEVE_DIC'].map(function(n){return _idx(enc,n);})
+    eDeMs:['EJE_DEVE_ENE','EJE_DEVE_FEB','EJE_DEVE_MAR','EJE_DEVE_ABR','EJE_DEVE_MAY','EJE_DEVE_JUN','EJE_DEVE_JUL','EJE_DEVE_AGO','EJE_DEVE_SET','EJE_DEVE_OCT','EJE_DEVE_NOV','EJE_DEVE_DIC'].map(function(n){return _idx(enc,n);}),
+    est:enc.indexOf('ESTADO'),
+    obs:_getObsIdx(enc)
   };
-  var dC=hC.getDataRange().getValues();
-  var mC=[],mCTot=[],mD=[],mDTot=[],mEe=[],mEd=[];
-  for(var r=CONFIG.filasEnc.consolidado;r<dC.length;r++){
+  var dataFull = hC.getDataRange().getValues();
+  var cabeceras = dataFull.slice(0, CONFIG.filasEnc.consolidado);
+  var dC = dataFull.slice(CONFIG.filasEnc.consolidado);
+  
+  var filtrado = [];
+  
+  for(var r=0; r<dC.length; r++){
     var f=dC[r];
+    var sf=String(f[idx.sf]).trim();
+    if(sf==='' || sf==='0000') {
+       filtrado.push(f); continue;
+    }
+    
     var pia=_n(f[idx.pia]);
+    
+    if(idx.pim>=0) f[idx.pim] = 0;
+    if(idx.tCe>=0) f[idx.tCe] = 0;
+    if(idx.tDe>=0) f[idx.tDe] = 0;
+    
+    if (pia === 0) {
+      if(idx.est>=0) f[idx.est] = 'Observado';
+      if(idx.obs>=0) f[idx.obs] = 'Clasificador activo en SISPLAN pero con PIA 0 en DEVENGADO';
+      
+      for(var m=0;m<12;m++){
+        f[idx.cMs[m]] = 0;
+        f[idx.dMs[m]] = 0;
+        f[idx.eCeMs[m]] = 0;
+        f[idx.eDeMs[m]] = 0;
+      }
+      f[idx.cTot] = 0;
+      f[idx.dTot] = 0;
+      
+      filtrado.push(f);
+      continue; 
+    }
+    
     var cants=idx.cants.map(function(i2){return _n(f[i2]);});
     var certArray=new Array(12).fill(0); certArray[0]=pia;
     var deveArray=new Array(12).fill(0);
@@ -348,16 +394,24 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
     }
     
     for(var m=0;m<12;m++){
-      dC[r][idx.cMs[m]] = certArray[m];
-      dC[r][idx.dMs[m]] = deveArray[m];
-      dC[r][idx.eCeMs[m]] = 0;
-      dC[r][idx.eDeMs[m]] = 0;
+      f[idx.cMs[m]] = certArray[m];
+      f[idx.dMs[m]] = deveArray[m];
+      f[idx.eCeMs[m]] = 0;
+      f[idx.eDeMs[m]] = 0;
     }
-    dC[r][idx.cTot] = pia;
-    dC[r][idx.dTot] = pia;
+    f[idx.cTot] = pia;
+    f[idx.dTot] = pia;
+    if(idx.est>=0) f[idx.est] = 'Ok';
+    if(idx.obs>=0) f[idx.obs] = 'PIA Proyectado Automáticamente';
+    
+    filtrado.push(f);
   }
-  // ESCRITURA ATÓMICA DE ALTO RENDIMIENTO (Mapeo Fase P0)
-  hC.getDataRange().setValues(dC);
+  
+  hC.clearContents();
+  var finalData = cabeceras.concat(filtrado);
+  if(finalData.length>0 && finalData[0].length>0){
+    hC.getRange(1, 1, finalData.length, finalData[0].length).setValues(finalData);
+  }
 }
 
 // =============================================================================

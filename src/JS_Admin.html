@@ -203,6 +203,10 @@ function seleccionarPeriodo(p) {
     S.resumen = null;     // Limpiamos caché para forzar recarga de datos
     S.metaData = null;
     S.currentMeta = null;
+    S.dashMetaFiltered = [];
+    S.metaFiltered = [];
+    if(typeof clearMetaViews==='function') clearMetaViews();
+    if(typeof resetUpload==='function') resetUpload();
 
     // 3. Actualizamos la interfaz (Sidebar y Badge)
     $('sb-periodo-anio').textContent = p.periodo;

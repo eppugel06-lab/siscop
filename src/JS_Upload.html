@@ -31,8 +31,20 @@
   }
 
   function alCambiarMes() {
-    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    refreshUIState();
+    updateProcesarBtn();
     
+    var mc = $('mes-select').value;
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
+    // Clear validation alerts
+    if (mc !== '' || esPIA) {
+      if (S.filesNew.devengado) clearValAlert('devengado');
+      if (S.filesNew.certificado) clearValAlert('certificado');
+    }
+  }
+
+  function refreshUIState() {
+    var esPIA = $('tipo-proceso-select') && $('tipo-proceso-select').value === 'PIA';
     // UI Updates
     if (esPIA) {
        if($('mes-select-wrap')) {
@@ -40,6 +52,10 @@
          $('mes-select-wrap').style.pointerEvents = 'none';
          $('mes-select').value = '';
          if($('mes-select-hint')) $('mes-select-hint').textContent = '— Inhabilitado (No requerido para PIA)';
+       }
+       if($('dz-certificado')) {
+         $('dz-certificado').style.opacity = '0.3';
+         $('dz-certificado').style.pointerEvents = 'none';
        }
        if($('dz-certificado-sub')) $('dz-certificado-sub').textContent = 'No requerido para programación PIA';
        if($('dz-devengado-sub')) $('dz-devengado-sub').textContent = 'Arrastra o haz clic · Sin validación de mes';
@@ -49,17 +65,12 @@
          $('mes-select-wrap').style.pointerEvents = 'auto';
          if($('mes-select-hint')) $('mes-select-hint').textContent = '— aplica a Devengado y Certificado';
        }
+       if($('dz-certificado')) {
+         $('dz-certificado').style.opacity = '1';
+         $('dz-certificado').style.pointerEvents = 'auto';
+       }
        if($('dz-certificado-sub')) $('dz-certificado-sub').textContent = 'Arrastra o haz clic · Requiere mes de corte';
        if($('dz-devengado-sub')) $('dz-devengado-sub').textContent = 'Arrastra o haz clic · Requiere mes de corte';
-    }
-
-    updateProcesarBtn();
-    var mc = $('mes-select').value;
-    
-    // Clear validation alerts
-    if (mc !== '' || esPIA) {
-      if (S.filesNew.devengado) clearValAlert('devengado');
-      if (S.filesNew.certificado) clearValAlert('certificado');
     }
   }
 
@@ -165,18 +176,14 @@
     btn.disabled = !(allReady && anyNew && !needsMes) || S.procesando;
 
     if (esPIA) {
-       $('dz-certificado').style.opacity = '0.3';
-       $('dz-certificado').style.pointerEvents = 'none';
        if (!allReady) hint.textContent = 'Faltan insumos (SISPLAN y DEVENGADO requeridos para PIA)';
        else if (!anyNew) hint.textContent = 'Carga al menos un archivo para proyectar PIA';
-       else hint.textContent = 'Listo para proyectar PIA';
+       else hint.textContent = 'Listo para proyectar PIA (Modo sin ejecución)';
     } else {
-       $('dz-certificado').style.opacity = '1';
-       $('dz-certificado').style.pointerEvents = 'auto';
        if (!allReady) hint.textContent = 'Faltan insumos (carga o precarga requerida para los 3)';
        else if (!anyNew) hint.textContent = 'Carga al menos un archivo nuevo para procesar';
        else if (needsMes) hint.textContent = 'Selecciona el mes de corte para Devengado/Certificado';
-       else hint.textContent = 'Listo para procesar';
+       else hint.textContent = 'Listo para procesar (Modo Normal de Ejecución)';
     }
   }
 
@@ -252,7 +259,11 @@
     setLogProgress('Iniciando...');
     setTitle('⏳ Procesando...');
     logLine('Iniciando consolidación SISCOP · UGEL 06', 'info');
-    logLine('Mes de corte: ' + MESES[mc] + ' · Aplica a Devengado y Certificado', 'info');
+    if (esPIA) {
+      logLine('Modo: Programación de PIA Institucional', 'info');
+    } else {
+      logLine('Mes de corte: ' + MESES[mc] + ' · Aplica a Devengado y Certificado', 'info');
+    }
 
     var uploads = [];
     if (S.filesNew.sisplan) uploads.push({ key: 'sisplan', target: 'SISPLAN', b64: S.filesData.sisplan });
@@ -263,7 +274,7 @@
     function uploadNext() {
       if (done >= total) { runConsolidado(); return; }
       var u = uploads[done];
-      logLine('Subiendo ' + u.target + ' (Chunked)...', 'info');
+      logLine('Subiendo ' + u.target + '...', 'info');
       gasCall('uploadAndSaveToSheet', [u.b64, u.target], function (r) {
         done++;
         logLine('✓ ' + u.target + ' — ' + r.rows + ' filas', 'ok');
@@ -299,10 +310,16 @@
         $('sb-periodo').textContent = MESES[mc] + ' ' + CY;
         S.procesando = false; S.processed = true;
         S.filesNew = { sisplan: false, devengado: false, certificado: false };
-        S.resumen = null; // Limpiar caché para forzar recarga
+        S.resumen = null; 
+        S.metaData = null;
+        S.currentMeta = null;
+        S.dashMetaFiltered = [];
+        S.metaFiltered = [];
+        if(typeof clearMetaViews==='function') clearMetaViews();
         toast('¡Proceso completado exitosamente!', 'ok', 5000);
         setTitle('✓ Proceso completado');
         loadMetaSelect();
+        navTo('dashboard');
       }, function (err) {
         logLine('✗ ' + err.message, 'err');
         toast('Error: ' + err.message, 'err');
