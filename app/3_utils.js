@@ -5,6 +5,7 @@ function _getEnc(hoja,filaNum){var ult=hoja.getLastColumn();if(ult===0) return [
 function _idx(enc,nombre){var i=enc.indexOf(nombre.trim().toUpperCase());if(i===-1) throw new Error('Columna "'+nombre+'" no encontrada.');return i;}
 function _getObsIdx(enc){var i1=enc.indexOf('OBSERVACION'),i2=enc.indexOf('OBSERVACI\u00d3N');return i1!==-1?i1:i2;}
 function _n(v){return Number(v)||0;}
+function _normSF(val){var n=parseInt(Number(val),10);return isNaN(n)?'0000':String(n).padStart(4,'0');}
 
 function _leerResumenEstados(ss) {
   try {
@@ -120,3 +121,4 @@ function _getUltimoPeriodo(ss) {
 }
 
 // =============================================================================
+if (typeof module !== 'undefined') { module.exports = { _normSF: typeof _normSF !== 'undefined' ? _normSF : null, _n: typeof _n !== 'undefined' ? _n : null }; }

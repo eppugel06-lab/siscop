@@ -134,8 +134,8 @@ function ejecutarConsolidado(mesCorte, tipoProceso) {
     var t2=new Date(); _CORE_IMPORTAR_DEVENGADO(ss);  SpreadsheetApp.flush(); etapas.push({nombre:'DEVENGADO importado',  duracion:Math.round((new Date()-t2)/1000)});
     
     if (esPIA) {
-      var t3=new Date(); _CORE_LLENAR_PIA_PIM(ss,mesCorte); SpreadsheetApp.flush(); etapas.push({nombre:'Lectura PIA',duracion:Math.round((new Date()-t3)/1000)});
-      var t5=new Date(); _CORE_CALCULAR_PROG_PIA(ss);  SpreadsheetApp.flush(); etapas.push({nombre:'Programación PIA',duracion:Math.round((new Date()-t5)/1000)});
+      var tPia1=new Date(); _CORE_LLENAR_SOLO_PIA(ss); SpreadsheetApp.flush(); etapas.push({nombre:'Lectura PIA',duracion:Math.round((new Date()-tPia1)/1000)});
+      var tPia2=new Date(); _CORE_CALCULAR_PROG_PIA(ss);  SpreadsheetApp.flush(); etapas.push({nombre:'Programación PIA',duracion:Math.round((new Date()-tPia2)/1000)});
     } else {
       var t3=new Date(); _CORE_LLENAR_PIA_PIM(ss,mesCorte); SpreadsheetApp.flush(); etapas.push({nombre:'PIA/PIM/Devengado',duracion:Math.round((new Date()-t3)/1000)});
       var t4=new Date(); _CORE_LLENAR_EJE_CERT(ss,mesCorte);SpreadsheetApp.flush(); etapas.push({nombre:'Certificado',       duracion:Math.round((new Date()-t4)/1000)});
@@ -474,39 +474,8 @@ function _exportarFiltrado(ss, hC, filtroFn) {
   return { rows:filtradas.length, url:url };
 }
 
-// ─── 1.10 HISTORIAL DE EXPORTACIONES ─────────────────────────────────────────
-function getExportLog(limit) {
-  try {
-    var perfilStatus = obtenerPerfilUsuario();
-    if (!perfilStatus.ok) return [];
-    var esAdmin = perfilStatus.perfil.rol==='Admin';
-    var miEmail = perfilStatus.perfil.email.toLowerCase();
-
-    var ss = SpreadsheetApp.openById(_getSpreadsheetIdActivo());
-    var hL = ss.getSheetByName(CONFIG.hojas.exportLog);
-    if (!hL||hL.getLastRow()<2) return [];
-
-    var data = hL.getDataRange().getValues();
-    var rows = data.slice(1).reverse();
-    var lim  = limit||30;
-
-    var filtradas = esAdmin ? rows : rows.filter(function(r){
-      return String(r[1]||'').toLowerCase()===miEmail;
-    });
-
-    return filtradas.slice(0,lim).map(function(r){
-      return {
-        ts:String(r[0]||''), user:String(r[1]||''),
-        tipo:String(r[2]||''), filas:Number(r[3]||0),
-        fileName:String(r[4]||'')
-      };
-    });
-  } catch(e) {
-    Logger.log('getExportLog error: '+e.message);
-    return [];
-  }
-}
-
+// NOTA: getExportLog activa está en 3_utils.js (lee desde BD Historial).
+// La versión legacy que leía del SS local fue eliminada (H-16).
 
 // ─── 1.11 MARCAR OBSERVACIÓN COMO CORREGIDA ───────────────────────────────────
 // clasificadores puede ser string (uno) o array (varios, para alertas agrupadas)
