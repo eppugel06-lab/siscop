@@ -40,23 +40,15 @@
     --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
     --radius: 12px;
     --radius-lg: 16px;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
-    --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Apple Materials */
-    --blur: blur(20px) saturate(180%);
+    --blur: blur(20px);
+    --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .dark {
-    --bg: #000000; /* True Black */
-    --surface: rgba(28, 28, 30, 0.85); /* Apple Elevated System Background */
-    --surface2: rgba(44, 44, 46, 0.7);
-    --sidebar-bg: rgba(18, 18, 18, 0.94);
-    --sidebar-txt: #EBEBF5;
+  [data-theme="dark"] {
+    --background: #000000;
+    --surface: rgba(28, 28, 30, 0.7);
+    --surface2: #1c1c1e;
     --border: rgba(255, 255, 255, 0.12);
-    --border2: rgba(255, 255, 255, 0.2);
     --text: #FFFFFF;
     --text2: #EBEBF5;
     --text3: #8E8E93;
@@ -148,7 +140,7 @@
   #sidebar {
     width: 240px;
     min-width: 240px;
-    background: var(--sidebar-bg);
+    background: var(--surface);
     backdrop-filter: var(--blur);
     -webkit-backdrop-filter: var(--blur);
     display: flex;
@@ -192,14 +184,14 @@
   .sb-logo-text .t1 {
     font-size: .78rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text1);
     letter-spacing: .03em;
     line-height: 1.2
   }
 
   .sb-logo-text .t2 {
     font-size: .62rem;
-    color: var(--sidebar-txt);
+    color: var(--text3);
     line-height: 1.3;
     margin-top: 1px
   }
@@ -223,7 +215,7 @@
   .nav-section-label {
     font-size: .58rem;
     font-weight: 700;
-    color: #334155;
+    color: var(--text3);
     text-transform: uppercase;
     letter-spacing: .12em;
     padding: 0 8px;
@@ -238,7 +230,7 @@
     border-radius: 8px;
     font-size: .8rem;
     font-weight: 500;
-    color: var(--sidebar-txt);
+    color: var(--text2);
     cursor: pointer;
     transition: all var(--transition);
     margin-bottom: 1px;
@@ -262,8 +254,18 @@
   }
 
   .nav-item:hover {
-    background: rgba(255, 255, 255, .06);
-    color: #CBD5E1
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  .nav-item.active {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  .nav-item.active .ni-icon {
+    opacity: 1;
+    stroke-width: 2.2;
   }
 
   .nav-item:hover .ni-icon {

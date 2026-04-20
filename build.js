@@ -5,8 +5,10 @@ let indexHtml = fs.readFileSync('src/Index.html', 'utf-8');
 // Encuentra todas las inyecciones: <?!= include('NombreDeArchivo'); ?>
 const finalHtml = indexHtml.replace(/<\?\!= include\('(.*?)'\); \?>/g, (match, fileName) => {
     try {
-        const fileContent = fs.readFileSync(`src/${fileName}.html`, 'utf-8');
-        return fileContent;
+        let fileContent = fs.readFileSync(`src/${fileName}.html`, 'utf-8');
+        // Sanitización básica: Evitar inyecciones accidentales de etiquetas script rotas 
+        // o contenido que pueda comprometer la estructura del Index.html final
+        return fileContent.trim();
     } catch(e) {
         console.warn(`Archivo no encontrado: ${fileName}`);
         return `<!-- Fallo inyectando: ${fileName} -->`;

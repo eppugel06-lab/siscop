@@ -1,50 +1,415 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Audit Pro - Dashboard</title>
-<style>
-:root {
-  --bg: #0f172a; --surface: #1e293b; --text: #f8fafc; --text-muted: #94a3b8;
-  --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-body { background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
-.card { background: var(--surface); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-h1, h2 { color: var(--text); margin-bottom: 15px; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-.kpi { padding: 15px; background: rgba(255,255,255,0.05); border-radius: 6px; }
-.kpi-val { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-.kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th, td { text-align: left; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-th { color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
-.badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-.bg-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-.bg-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-.bg-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISCOP Audit Dashboard</title>
+  <style>
+    :root {
+      --bg-primary: #050505;
+      --bg-secondary: #0f0f0f;
+      --bg-card: #141414;
+      --bg-card-hover: #1a1a1a;
+      --bg-modal: #1c1c1e;
+      --border: #2c2c2e;
+      --text-primary: #ffffff;
+      --text-secondary: #8e8e93;
+      --text-muted: #48484a;
+      --accent-green: #34c759;
+      --accent-red: #ff3b30;
+      --accent-orange: #ff9500;
+      --accent-blue: #007aff;
+      --accent-purple: #af52de;
+      --agent-bg: #1c2e24;
+      --agent-border: #34c759;
+      --priority-must: #ff3b30;
+      --priority-should: #ff9500;
+      --priority-nice: #007aff;
+      --badge-uc: #1f3a5f; --badge-uc-b: #007aff; --badge-uc-t: #007aff;
+      --badge-api: #1a3a2a; --badge-api-b: #34c759; --badge-api-t: #34c759;
+      --badge-bdd: #2d1f3a; --badge-bdd-b: #af52de; --badge-bdd-t: #af52de;
+      --badge-inv: #3a2a1a; --badge-inv-b: #ff9500; --badge-inv-t: #ff9500;
+      --badge-code: #1a2a3a; --badge-code-b: #5ac8fa; --badge-code-t: #5ac8fa;
+      --font-mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
+      --font-sans: -apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-sans);font-size:14px;min-height:100vh;}
+
+    /* ENCABEZADO */
+    .header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter: blur(20px);}
+    .header-left{display:flex;align-items:center;gap:10px;}
+    .header-title{font-size:18px;font-weight:700;letter-spacing: -0.5px;}
+    .header-title .sdd{color:var(--accent-blue);}
+    .header-badge{background:var(--accent-blue);color:white;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;}
+    .header-meta{color:var(--text-secondary);font-size:12px;font-family: var(--font-mono);}
+
+    /* CONTENEDOR */
+    .container{padding:20px 24px;max-width:1600px;margin:0 auto;}
+
+    /* PIPELINE */
+    .pipeline{display:flex;align-items:center;gap:4px;overflow-x:auto;padding:16px 0;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+    .agent-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;min-width:110px;flex-shrink:0;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s, background 0.2s;}
+    .agent-card:hover{transform:translateY(-2px);background: var(--bg-card-hover);box-shadow:0 8px 16px rgba(0,0,0,0.4);}
+    .agent-card.listo{border-color: var(--accent-green);}
+    .agent-card.critico{background:#2d1515;border-color:var(--accent-red);}
+    .agent-nombre{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);}
+    .agent-count{font-size:26px;font-weight:700;color:var(--accent-blue);margin:4px 0 2px;}
+    .agent-card.listo .agent-count{color:var(--accent-green);}
+    .agent-card.critico .agent-count{color:var(--accent-red);}
+    .agent-estado{font-size:10px;color:var(--text-secondary);}
+    .pipeline-arrow{color:var(--text-muted);font-size:16px;flex-shrink:0;}
+
+    /* MÉTRICAS */
+    .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0;}
+    .metric-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+    .metric-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:10px;}
+    .metric-value{font-size:38px;font-weight:700;line-height:1;letter-spacing: -1px;}
+    .metric-value.verde{color:var(--accent-green);}
+    .metric-value.rojo{color:var(--accent-red);}
+    .metric-value.naranja{color:var(--accent-orange);}
+    .metric-sub{font-size:12px;color:var(--text-secondary);margin-top:6px;}
+
+    /* FILTROS */
+    .filter-bar{display:flex;gap:10px;align-items:center;margin:20px 0 10px;flex-wrap:wrap;}
+    .search-input{flex:1;min-width:180px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text-primary);font-size:13px;outline:none;}
+    .search-input:focus{border-color:var(--accent-blue);}
+    .search-input::placeholder{color:var(--text-muted);}
+    .filter-select{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:12px;cursor:pointer;outline:none;}
+    .filter-select:focus{border-color:var(--accent-blue);}
+    .filter-count{margin-left:auto;color:var(--text-secondary);font-size:12px;white-space:nowrap;}
+
+    /* TABLA */
+    .table-wrapper{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--bg-secondary);}
+    th{padding:12px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+    th:hover{color:var(--text-primary);}
+    td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tr.fila-dato:hover td{background:var(--bg-card-hover);cursor:pointer;}
+    tr.fila-dato.activa td{background:#001d3d;}
+
+    .req-id{color:var(--accent-blue);font-family:var(--font-mono);font-size:12px;white-space:nowrap;cursor:pointer;font-weight:700;text-decoration:none;}
+    .req-id:hover{text-decoration:underline;}
+
+    .priority-badge{display:inline-block;padding:2px 10px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap;text-transform: uppercase;}
+    .priority-must{background:var(--priority-must);color:white;}
+    .priority-should{background:var(--priority-should);color:white;}
+    .priority-nice{background:var(--priority-nice);color:white;}
+
+    .check{color:var(--accent-green);font-size:15px;}
+    .cross{color:var(--accent-red);font-size:15px;}
+    .status-cubierto{color:var(--accent-green);font-weight:700;font-size:12px;}
+    .status-planificado{color:var(--accent-orange);font-weight:700;font-size:12px;}
+    .status-faltante{color:var(--accent-red);font-weight:700;font-size:12px;}
+
+    /* FILA EXPANDIDA */
+    tr.fila-expandida td{padding:0;}
+    .expand-panel{background:#000000;border-top:2px solid var(--accent-blue);padding:16px 20px;display:none;}
+    .expand-panel.visible{display:block;}
+    .expand-titulo{font-family:var(--font-mono);color:var(--accent-blue);font-size:13px;font-weight:700;margin-bottom:12px;}
+    .artefactos-lista{display:flex;flex-direction:column;gap:6px;}
+    .artefacto-item{display:flex;align-items:center;gap:10px;font-size:12px;line-height:1.4;flex-wrap:wrap;}
+    .artefacto-check{color:var(--accent-green);font-size:13px;flex-shrink:0;}
+    .artefacto-badge{display:inline-block;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;border:1px solid;}
+    
+    .badge-uc{background:var(--badge-uc);border-color:var(--badge-uc-b);color:var(--badge-uc-t);}
+    .badge-api{background:var(--badge-api);border-color:var(--badge-api-b);color:var(--badge-api-t);}
+    .badge-bdd{background:var(--badge-bdd);border-color:var(--badge-bdd-b);color:var(--badge-bdd-t);}
+    .badge-inv{background:var(--badge-inv);border-color:var(--badge-inv-b);color:var(--badge-inv-t);}
+    .badge-code{background:var(--badge-code);border-color:var(--badge-code-b);color:var(--badge-code-t);}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;backdrop-filter: blur(10px);}
+    .modal-overlay.visible{display:flex;}
+    .modal{background:var(--bg-modal);border:1px solid var(--border);border-radius:14px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,0.8);animation:modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
+    @keyframes modalIn{from{opacity:0;scale: 0.95;}to{opacity:1;scale: 1;}}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg-secondary);border-radius:14px 14px 0 0;}
+    .modal-ruta{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);}
+    .modal-cerrar{background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1;}
+    .modal-cerrar:hover{background:var(--bg-card);color:var(--text-primary);}
+    .modal-body{padding:20px 18px;}
+    .modal-titulo-hallazgo{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .modal-seccion{margin-bottom:18px;}
+    .modal-seccion h4{font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);color: var(--accent-blue);}
+    .modal-seccion p{font-size:13px;color:var(--text-secondary);line-height:1.7;}
+
+    /* FASES */
+    .phase-tabs{display:flex;border-bottom:1px solid var(--border);margin:24px 0 0;overflow-x:auto;}
+    .phase-tab{padding:10px 18px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-secondary);border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+    .phase-tab.activo{color:var(--accent-blue);border-bottom-color:var(--accent-blue);}
+    .phase-tab:hover{color:var(--text-primary);}
+    .phase-content{display:none;padding:20px 0;}
+    .phase-content.activo{display:block;}
+    .phase-pct{color:var(--accent-green);font-weight:800;font-size:24px;}
+    .progress-wrap{height:10px;background:var(--bg-secondary);border-radius:10px;margin:10px 0 16px;overflow:hidden;}
+    .progress-bar{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent-green),var(--accent-blue));transition:width 0.8s cubic-bezier(0.16, 1, 0.3, 1);}
+    .epic-lista{display:grid;grid-template-columns: repeat(2, 1fr);gap:12px;}
+    .epic-item{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
+    .epic-nombre{font-weight:700;font-size:13px;}
+    .epic-meta{font-size:11px;color:var(--text-secondary);margin-top:2px;font-family: var(--font-mono);}
+
+    /* RESPONSIVE */
+    @media(max-width:1024px){.metrics-grid{grid-template-columns:repeat(2,1fr);}.epic-lista{grid-template-columns: 1fr;}}
+    @media(max-width:768px){.container{padding:12px 14px;}.metric-value{font-size:28px;}th,td{padding:10px 12px;font-size:12px;}.header-meta{display:none;}}
+  </style>
 </head>
 <body>
-<h1>Dashboard de Auditoría: System Audit Skill</h1>
-<div class="kpi-grid card">
-  <div class="kpi" style="border-left: 3px solid var(--danger)"><div class="kpi-val">2</div><div class="kpi-label">Hallazgos Críticos</div></div>
-  <div class="kpi" style="border-left: 3px solid var(--warning)"><div class="kpi-val">4</div><div class="kpi-label">Advertencias</div></div>
-  <div class="kpi" style="border-left: 3px solid var(--success)"><div class="kpi-val">100%</div><div class="kpi-label">Avance Fase 0-2</div></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modalContenido"></div>
 </div>
 
-<div class="card">
-  <h2>Matriz de Referencia y Hallazgos</h2>
-  <table>
-    <thead><tr><th>Agente</th><th>Prioridad</th><th>Problema</th><th>Estado</th></tr></thead>
-    <tbody id="audit-table-body">
-      <tr><td>Arquitecto</td><td><span class="badge bg-danger">P0</span></td><td>Referencia Rota: audit-template.md</td><td><span class="badge bg-success">Resuelto</span></td></tr>
-      <tr><td>Orquestador PM</td><td><span class="badge bg-danger">P0</span></td><td>Bleeding de Contexto por Agents.md</td><td><span class="badge bg-warning">Pendiente P1</span></td></tr>
-      <tr><td>UI/Frontend</td><td><span class="badge bg-warning">P1</span></td><td>Riesgo XSS en Dashboard JSON</td><td><span class="badge bg-warning">Pendiente P1</span></td></tr>
-      <tr><td>Seguridad</td><td><span class="badge bg-warning">P1</span></td><td>Inyección HTML no segura</td><td><span class="badge bg-warning">Pendiente P1</span></td></tr>
-    </tbody>
-  </table>
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><span class="sdd">SISCOP</span> Audit Dashboard</span>
+    <span class="header-badge" id="headerBadge">v1.1</span>
+  </div>
+  <div class="header-meta" id="headerMeta"></div>
 </div>
+
+<div class="container">
+  <div class="pipeline" id="pipeline"></div>
+  <div class="metrics-grid" id="metricsGrid"></div>
+
+  <div class="filter-bar">
+    <input class="search-input" type="text" placeholder="Buscar hallazgo..." id="searchInput" oninput="filtrarTabla()">
+    <select class="filter-select" id="statusFilter" onchange="filtrarTabla()">
+      <option value="">Todo Estado</option>
+      <option value="Cubierto">Cubierto</option>
+      <option value="Planificado">Planificado</option>
+      <option value="Faltante">Faltante</option>
+    </select>
+    <select class="filter-select" id="priorityFilter" onchange="filtrarTabla()">
+      <option value="">Toda Prioridad</option>
+      <option value="Obligatorio">Obligatorio</option>
+      <option value="Debería">Debería</option>
+    </select>
+    <div class="filter-count" id="filterCount"></div>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>HALLAZGO</th><th>PRIORIDAD</th>
+          <th>FE</th><th>UX</th><th>UI</th><th>A11Y</th><th>ESTADO</th>
+        </tr>
+      </thead>
+      <tbody id="tablaBody"></tbody>
+    </table>
+  </div>
+
+  <div class="phase-tabs" id="phaseTabs"></div>
+  <div id="phaseContents"></div>
+</div>
+
+<script>
+const DATOS = {
+  nombreProyecto: "SISCOP",
+  proyectoId: "SISCOP-AUDIT-2026",
+  version: "v1.1",
+  fecha: new Date().toLocaleDateString('es-PE'),
+
+  agentes: [
+    {nombre:"FRONTEND",    count:2,  estado:"listo", critico:true },
+    {nombre:"UX",          count:2,  estado:"listo", critico:false},
+    {nombre:"UI",          count:1,  estado:"listo", critico:true },
+    {nombre:"ACCESIB.",    count:1,  estado:"listo", critico:true },
+    {nombre:"PM",          count:0,  estado:"listo", critico:false}
+  ],
+
+  metricas: [
+    {etiqueta:"REQS APPLE PRO",         valor:"45%",  sub:"Fase P0 en progreso",    color:"naranja" },
+    {etiqueta:"ACCESIBILIDAD",          valor:"60%",  sub:"Meta: WCAG AA",          color:"naranja" },
+    {etiqueta:"RIESGOS CRÍTICOS",      valor:"3",    sub:"XSS, A11Y, UI Contrast",   color:"rojo"  },
+    {etiqueta:"ROADMAP COMPLETO",       valor:"L",    sub:"2 meses estimado",       color:"verde" }
+  ],
+
+  hallazgos: [
+    {
+      id:"REQ-FE-001", titulo:"Sanitización de Inyecciones (Build Engine)",
+      prioridad:"Obligatorio", fase:"P0",
+      fe:true, ux:false, ui:false, a11y:false, 
+      estado:"Faltante",
+      detalle:{
+        rutaArchivo:"build.js (línea 6)",
+        descripcion:"El motor de construcción `build.js` inyecta contenidos de archivos `.html` directamente mediante una expresión regular. Si el contenido inyectado proviene de fuentes externas o se ve comprometido, facilita ataques XSS.",
+        accion:"Implementar una capa de sanitización durante el proceso de empaquetado."
+      }
+    },
+    {
+      id:"REQ-UI-001", titulo:"Consistencia de Colores Modo Oscuro",
+      prioridad:"Obligatorio", fase:"P0",
+      fe:false, ux:false, ui:true, a11y:false, 
+      estado:"Planificado",
+      detalle:{
+        rutaArchivo:"src/CSS_Global.html",
+        descripcion:"Los colores de marca estáticos actuales no garantizan legibilidad en el contraste 'True Black'. Se deben adoptar los System Colors dinámicos de Apple.",
+        accion:"Reemplazar hex estáticos por variables adaptativas con mayor ratio de luminancia."
+      }
+    },
+    {
+      id:"REQ-A11Y-001", titulo:"Navegación por Teclado y Gestión de Foco",
+      prioridad:"Obligatorio", fase:"P1",
+      fe:false, ux:false, ui:false, a11y:true, 
+      estado:"Faltante",
+      detalle:{
+        rutaArchivo:"src/View_Sidebar.html",
+        descripcion:"Los elementos de navegación son botones pero muchos carecen de estados `:focus-visible` discernibles, bloqueando la accesibilidad motriz.",
+        accion:"Añadir outlines de alto contraste y soporte de tabindex secuencial."
+      }
+    },
+    {
+      id:"REQ-UX-001", titulo:"Feedback Visual de Transiciones",
+      prioridad:"Debería", fase:"P1",
+      fe:true, ux:true, ui:false, a11y:false, 
+      estado:"Planificado",
+      detalle:{
+        rutaArchivo:"src/Index.html",
+        descripcion:"El cambio entre páginas es instantáneo (FOUC parcial). Los estándares Apple Pro sugieren transiciones suaves.",
+        accion:"Implementar micro-animaciones (fade/slide) usando la View Transitions API o CSS animations."
+      }
+    },
+    {
+      id:"REQ-FE-002", titulo:"Optimización del Bundle (Split Layout)",
+      prioridad:"Debería", fase:"P2",
+      fe:true, ux:false, ui:false, a11y:false, 
+      estado:"Cubierto",
+      detalle:{
+        rutaArchivo:"app/Index.html",
+        descripcion:"El archivo final supera los 230KB. Apple Pro requiere carga progresiva.",
+        accion:"Mover estilos CSS a una biblioteca dinámica o reducir redundancia en el build."
+      }
+    }
+  ],
+
+  fases: [
+    {id:"P0",etiqueta:"P0 Fundación Visual", objetivo:"Corregir riesgos críticos de seguridad y establecer diseño base.", progreso:30,
+     epicas:[
+       {nombre:"Sanitización Build",  agente:"FE",  esfuerzo:"S", tareas:3, hechas:0},
+       {nombre:"Apple Design Tokens", agente:"UI",  esfuerzo:"S", tareas:5, hechas:2},
+       {nombre:"Carga Interfaz",      agente:"UX",  esfuerzo:"S", tareas:4, hechas:1}
+     ]},
+    {id:"P1",etiqueta:"P1 Core UX", objetivo:"Navegación fluida y accesibilidad fundamental.", progreso:0,
+     epicas:[
+       {nombre:"Keyboard Nav",        agente:"A11Y",esfuerzo:"M", tareas:6, hechas:0},
+       {nombre:"Framer Motions lite", agente:"FE",  esfuerzo:"M", tareas:4, hechas:0}
+     ]}
+  ]
+};
+
+function render() {
+  document.getElementById('headerMeta').textContent = `${DATOS.proyectoId}  ·  ${DATOS.fecha}`;
+  document.getElementById('headerBadge').textContent = DATOS.version;
+
+  document.getElementById('pipeline').innerHTML = DATOS.agentes.map((a,i) =>
+    `${i>0?'<span class="pipeline-arrow">→</span>':''}
+    <div class="agent-card ${a.critico?'critico':''} ${a.estado==='listo'?'listo':''}">
+      <div class="agent-nombre">${a.nombre}</div>
+      <div class="agent-count">${a.count}</div>
+      <div class="agent-estado">${a.estado}</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('metricsGrid').innerHTML = DATOS.metricas.map(m =>
+    `<div class="metric-card">
+      <div class="metric-label">${m.etiqueta}</div>
+      <div class="metric-value ${m.color}">${m.valor}</div>
+      <div class="metric-sub">${m.sub}</div>
+    </div>`
+  ).join('');
+
+  renderTabla(DATOS.hallazgos);
+  renderFases();
+}
+
+function renderTabla(hallazgos) {
+  const body = document.getElementById('tablaBody');
+  body.innerHTML = hallazgos.map((h,idx) => {
+    const pc = h.prioridad==='Obligatorio'?'must':'should';
+    const sc = h.estado==='Cubierto'?'cubierto':h.estado==='Planificado'?'planificado':'faltante';
+    return `
+    <tr class="fila-dato" id="fila-${idx}" onclick="toggleExpand(${idx})">
+      <td><span class="req-id" onclick="abrirModal(event,${idx})">${h.id}</span></td>
+      <td>${h.titulo}</td>
+      <td><span class="priority-badge priority-${pc}">${h.prioridad}</span></td>
+      <td>${h.fe?'✓':''}</td><td>${h.ux?'✓':''}</td><td>${h.ui?'✓':''}</td><td>${h.a11y?'✓':''}</td>
+      <td><span class="status-${sc}">${h.estado}</span></td>
+    </tr>
+    <tr class="fila-expandida">
+      <td colspan="8"><div class="expand-panel" id="panel-${idx}"></div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('filterCount').textContent = `${hallazgos.length} filtrados`;
+}
+
+let filaExpandida = null;
+function toggleExpand(idx) {
+  const panel = document.getElementById(`panel-${idx}`);
+  const fila = document.getElementById(`fila-${idx}`);
+  if(filaExpandida === idx){
+    panel.classList.remove('visible'); fila.classList.remove('activa'); filaExpandida=null; return;
+  }
+  if(filaExpandida !== null){
+    document.getElementById(`panel-${filaExpandida}`).classList.remove('visible');
+    document.getElementById(`fila-${filaExpandida}`).classList.remove('activa');
+  }
+  filaExpandida = idx;
+  fila.classList.add('activa');
+  const h = DATOS.hallazgos[idx];
+  panel.innerHTML = `<div class="expand-titulo">DETALLE DEL HALLAZGO</div><p style="font-size:12px;color:var(--text-secondary)">${h.detalle.descripcion}</p>`;
+  panel.classList.add('visible');
+}
+
+function abrirModal(e, idx) {
+  e.stopPropagation();
+  const h = DATOS.hallazgos[idx];
+  const modal = document.getElementById('modalContenido');
+  modal.innerHTML = `
+    <div class="modal-header"><span class="modal-ruta">${h.detalle.rutaArchivo}</span><button class="modal-cerrar" onclick="cerrarModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-titulo-hallazgo">${h.titulo}</div>
+      <div class="modal-seccion"><h4>Hallazgo Crítico</h4><p>${h.detalle.descripcion}</p></div>
+      <div class="modal-seccion"><h4>ACCIÓN RECOMENDADA</h4><p style="color:var(--accent-green)">${h.detalle.accion}</p></div>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+
+function cerrarModal(e){ if(!e || e.target===document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('visible'); }
+
+function renderFases(){
+  const tabs = document.getElementById('phaseTabs');
+  const contents = document.getElementById('phaseContents');
+  tabs.innerHTML = DATOS.fases.map((f,i)=>`<div class="phase-tab ${i===0?'activo':''}" onclick="cambiarTab(${i})">${f.etiqueta}</div>`).join('');
+  contents.innerHTML = DATOS.fases.map((f,i)=>`
+    <div class="phase-content ${i===0?'activo':''}" id="fase-${i}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="phase-pct">${f.progreso}%</span>
+        <span style="font-size:11px;color:var(--accent-blue);font-weight:700">OBJETIVO: ${f.objetivo}</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${f.progreso}%"></div></div>
+      <div class="epic-lista">${f.epicas.map(e=>`<div class="epic-item"><div><div class="epic-nombre">${e.nombre}</div><div class="epic-meta">${e.agente} · effort:${e.esfuerzo}</div></div><div style="font-size:12px;color:var(--text-secondary)">${e.hechas}/${e.tareas}</div></div>`).join('')}</div>
+    </div>`).join('');
+}
+
+function cambiarTab(idx){
+  document.querySelectorAll('.phase-tab').forEach((t,i)=>t.classList.toggle('activo',i===idx));
+  document.querySelectorAll('.phase-content').forEach((c,i)=>c.classList.toggle('activo',i===idx));
+}
+
+function filtrarTabla(){
+  const busq = document.getElementById('searchInput').value.toLowerCase();
+  const estado = document.getElementById('statusFilter').value;
+  const prio = document.getElementById('priorityFilter').value;
+  renderTabla(DATOS.hallazgos.filter(h =>
+    (!busq || h.titulo.toLowerCase().includes(busq)) &&
+    (!estado || h.estado === estado) &&
+    (!prio || h.prioridad === prio)
+  ));
+}
+
+render();
+</script>
 </body>
 </html>
