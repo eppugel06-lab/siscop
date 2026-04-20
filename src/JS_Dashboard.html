@@ -517,10 +517,10 @@ function renderMetaTable(){
       '<td class="code" style="color:var(--text3)">'+(start+i+1)+'</td>'+
       '<td class="code">'+c.clasificador+'</td>'+
       '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.recurso+'</td>'+
+      '<td class="num show-on-pia" style="display:none">'+fmtS(c.pia)+'</td>'+
       '<td class="num">'+fmtS(c.pim)+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(c.ejeCertTotal)+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(c.ejeDeveTotal)+'</td>'+
-      '<td class="num show-on-pia" style="display:none">'+fmtS(c.pia)+'</td>'+
       '<td>'+fmtBadge(c.estado)+'</td>'+
     '</tr>';
   }).join('');

@@ -189,11 +189,13 @@ function getResumenGeneral() {
       var sf = String(f[idx.sf]).trim();
       if (!sf||sf==='0000'||sf==='') continue;
 
+      var fPia  = _n(f[idx.pia]);
       var fPim  = _n(f[idx.pim]);
       var fCert = _n(f[idx.tCert]);
       var fDeve = _n(f[idx.tDeve]);
       var est   = idx.est>=0 ? String(f[idx.est]||'').trim() : '';
 
+      pia     += fPia;
       pim     += fPim;
       ejeCert += fCert;
       ejeDeve += fDeve;
@@ -212,9 +214,10 @@ function getResumenGeneral() {
           sf: sf, 
           den: String(f[idx.den]||'').trim(), 
           pia: 0, pim: 0, ejeCert: 0, ejeDeve: 0,
-          counts: { ok: 0, obs: 0, add: 0, del: 0 } // <-- Contadores exactos por Meta
+          counts: { ok: 0, obs: 0, add: 0, del: 0 } 
         };
       }
+      metasMap[sf].pia     += fPia;
       metasMap[sf].pim     += fPim;
       metasMap[sf].ejeCert += fCert;
       metasMap[sf].ejeDeve += fDeve;
@@ -224,15 +227,6 @@ function getResumenGeneral() {
       else if (el.indexOf('observ')>-1) metasMap[sf].counts.obs++;
       else if (el.indexOf('agr')>-1)    metasMap[sf].counts.add++;
       else if (el.indexOf('elim')>-1)   metasMap[sf].counts.del++;
-    }
-
-    // Calcular el PIA (solo se suma una vez por meta)
-    for (var r2=CONFIG.filasEnc.consolidado; r2<data.length; r2++) {
-      var sf2 = String(data[r2][idx.sf]).trim();
-      if (metasMap[sf2] && metasMap[sf2].pia===0) {
-        metasMap[sf2].pia = _n(data[r2][idx.pia]);
-        pia += metasMap[sf2].pia;
-      }
     }
 
     // 4. NUEVO: Mapear el resultado final enviando los 'counts' al Frontend
@@ -247,11 +241,12 @@ function getResumenGeneral() {
       return {
         sf: m.sf, 
         den: m.den, 
+        pia: m.pia,
         pim: m.pim, 
         pctCert: pC, 
         pctDeve: pD, 
         estado: est,
-        counts: m.counts // <-- Propiedad clave que leerá tu JavaScript en el frontend
+        counts: m.counts 
       };
     });
 
