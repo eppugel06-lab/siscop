@@ -433,14 +433,11 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       }
     }
 
-    // ── Distribución (CERT=100% Enero, DEVE=Proporcional a Cants) ──
+    // ── Distribución proporcional CERT y DEVE a cantidades físicas (H-02) ──
     var cants  = idx.cants.map(function(i2){ return _n(f[i2]); });
     var totFis = cants.reduce(function(a, b){ return a + b; }, 0);
     var certArray = new Array(12).fill(0);
     var deveArray = new Array(12).fill(0);
-
-    // REGLA PIA: Certificación siempre al 100% en Enero
-    certArray[0] = pia;
 
     if (totFis > 0 && pia > 0) {
       var acum = 0, ultActivo = -1;
@@ -448,6 +445,7 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
         if (cants[m3] > 0) {
           var cuota = Math.floor((pia * (cants[m3] / totFis)) * 100) / 100;
           deveArray[m3] = cuota;
+          certArray[m3] = cuota;
           acum += cuota;
           ultActivo = m3;
         }
@@ -455,10 +453,12 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       var delta = Math.round((pia - acum) * 100) / 100;
       if (ultActivo >= 0) {
         deveArray[ultActivo] = Math.round((deveArray[ultActivo] + delta) * 100) / 100;
+        certArray[ultActivo] = Math.round((certArray[ultActivo] + delta) * 100) / 100;
       }
     } else if (pia > 0) {
-      // Sin meses activos → DEVENGADO todo a Enero con observación
+      // Sin meses activos → todo a Enero con observación (H-14)
       deveArray[0] = pia;
+      certArray[0] = pia;
       if (idx.obs >= 0) {
         var notaSinMeses = 'Sin meses activos en SISPLAN. PIA asignado a Enero.';
         var obsActual = String(f[idx.obs] || '');
