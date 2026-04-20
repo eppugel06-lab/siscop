@@ -59,21 +59,23 @@
     --shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
   }
 
-  [data-theme="dark"] {
-    --background: #000000;
-    --surface: rgba(28, 28, 30, 0.7);
-    --surface2: #1c1c1e;
+  /* OLED Pure Black - Apple Pro Dark Theme */
+  :root.dark {
+    --bg: #000000;
+    --surface: rgba(28, 28, 30, 0.8);
+    --surface2: #1C1C1E;
+    --sidebar-bg: rgba(18, 18, 18, 0.94);
+    --sidebar-txt: #EBEBF5;
     --border: rgba(255, 255, 255, 0.12);
-    --border-strong: rgba(255, 255, 255, 0.2);
+    --border2: rgba(255, 255, 255, 0.2);
     --text: #FFFFFF;
-    --text1: #ffffff;
-    --text2: #EBEBF5;
+    --text2: #AEAEB2;
     --text3: #8E8E93;
-    --shadow: 0 4px 16px rgba(0,0,0,0.4);
     --shadow-md: 0 12px 32px rgba(0,0,0,0.6);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    --blur: blur(30px);
   }
+
+  body.dark { background: #000; }
 
   *,
   *::before,
@@ -710,8 +712,7 @@
     border-radius: 6px;
     font-size: 0.65rem;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     border: 1px solid transparent;
     transition: all 0.2s var(--spring);
     white-space: nowrap;
@@ -741,6 +742,12 @@
     color: #FF3B30;
     border-color: rgba(255, 59, 48, 0.2);
   }
+
+  /* Fix Meta Bars */
+  #meta-bar-cert, .fill-green { background: var(--ring-cert); }
+  #meta-bar-deve, .fill-blue { background: var(--ring-deve); }
+  .fill-amber { background: var(--obs); }
+  .fill-red { background: var(--del); }
 
   /* Filter-bar refinements */
   .filter-bar .chip-btn {

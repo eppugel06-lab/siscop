@@ -86,13 +86,13 @@
 
       <!-- KPIs Secundarios -->
       <div class="bento-item bento-1x1 hide-on-pia">
-        <div class="kpi-label">CERTIFICACIÓN</div>
-        <div class="kpi-val" id="kpi-cert" style="color:var(--ring-cert)">0.0%</div>
+        <div class="kpi-label">Certificación</div>
+        <div class="kpi-val" id="kpi-cert" style="color:var(--ring-cert); flex-direction:column; align-items:flex-start; line-height:1.1">0.0</div>
       </div>
       
       <div class="bento-item bento-1x1 hide-on-pia">
-        <div class="kpi-label">DEVENGADO</div>
-        <div class="kpi-val" id="kpi-deve" style="color:var(--ring-deve)">0.0%</div>
+        <div class="kpi-label">Devengado</div>
+        <div class="kpi-val" id="kpi-deve" style="color:var(--ring-deve); flex-direction:column; align-items:flex-start; line-height:1.1">0.0</div>
       </div>
 
       <!-- Filtros Interactivos (Bento 4x1) -->
@@ -106,7 +106,7 @@
             <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> Ok</button>
             <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> Observado</button>
             <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> Agregar</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminado</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminar</button>
           </div>
         </div>
         <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 16px; border-radius:16px; font-weight:700; background:var(--brand-soft); color:var(--brand); border:none">

@@ -26,8 +26,8 @@ function renderDashboardData(d) {
   $('kpi-pia').textContent=fmtS(d.pia);
   if(!isPIA) {
     $('kpi-pim').textContent=fmtS(d.pim);
-    $('kpi-cert').textContent=d.pctCert.toFixed(1)+'%';
-    $('kpi-deve').textContent=d.pctDeve.toFixed(1)+'%';
+    $('kpi-cert').innerHTML=fmtS(d.ejeCertTotal || d.ejeCert || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctCert.toFixed(1) + '%</div>';
+    $('kpi-deve').innerHTML=fmtS(d.ejeDeveTotal || d.ejeDeve || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctDeve.toFixed(1) + '%</div>';
     setTimeout(function(){
       var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
       $('bar-cert').style.width=pC+'%';
@@ -150,7 +150,7 @@ function renderDashMetaTable(){
     if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminado</span>' });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminar</span>' });
     if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="s-badge obs">'+m.counts.obs+' Observado</span>' });
     if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="s-badge add">'+m.counts.add+' Agregar</span>' });
     if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="s-badge ok">'+m.counts.ok+' Ok</span>' });
@@ -299,13 +299,16 @@ function loadMetaData(sf){
       $('meta-pct-cert').textContent=pC.toFixed(1)+'%';
       $('meta-pct-deve').textContent=pD.toFixed(1)+'%';
     },100);
-    $('meta-kpi-grid').innerHTML=
-      document.body.classList.contains('is-pia') 
-      ? mkKpi('PIA Proyectado',fmtS(d.totales.pia)) + mkKpi('Clasificadores',d.clasificadores.length.toString())
-      : mkKpi('PIM',fmtS(d.totales.pim))+
-        mkKpi('Ejec. Certificado',fmtS(d.totales.ejeCert),pC.toFixed(1)+'%','fill-green')+
-        mkKpi('Ejec. Devengado',fmtS(d.totales.ejeDeve),pD.toFixed(1)+'%','fill-blue')+
-        mkKpi('Clasificadores',d.clasificadores.length.toString());
+    var metaHtml = mkKpi('PIA', fmtS(d.totales.pia || 0));
+    if (document.body.classList.contains('is-pia')) {
+      metaHtml += mkKpi('Clasificadores', d.clasificadores.length.toString());
+    } else {
+      metaHtml += mkKpi('PIM', fmtS(d.totales.pim)) +
+                  mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green') +
+                  mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue') +
+                  mkKpi('Clasificadores', d.clasificadores.length.toString());
+    }
+    $('meta-kpi-grid').innerHTML = metaHtml;
     renderMetaAlerts(d.clasificadores);
     renderClasifSidebar(d.clasificadores,null);
     renderMetaTable();
@@ -603,7 +606,7 @@ function renderClasifDetail(c){
     '<div class="card-body" style="padding:24px">' +
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
-        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminado' : c.estado)))) + '</span>' +
+        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminar' : (c.estado === 'Ok' ? 'Ok' : c.estado))))) + '</span>' +
       '</div>' +
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       
@@ -631,8 +634,9 @@ function renderClasifDetail(c){
   // 4. BLOQUE DE KPIs
   var isPIA = document.body.classList.contains('is-pia');
   html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +
-    mkKpi(isPIA?'PIA TOTAL':'PIM TOTAL', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
-    (isPIA?'':mkKpi('EJEC. CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('EJEC. DEVENGADO', fmtS(c.ejeDeveTotal))) +
+    mkKpi('PIA', fmtS(c.pia || 0)) +
+    mkKpi(isPIA?'PIA TOTAL':'PIM', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
+    (isPIA?'':mkKpi('CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('DEVENGADO', fmtS(c.ejeDeveTotal))) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
@@ -650,9 +654,9 @@ function renderClasifDetail(c){
       '<th>TOTAL</th></tr></thead><tbody>';
 
   var progRows = [
-    { label: 'CANTIDAD MENSUAL', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
-    { label: 'CERTIFICACIÓN', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ring-cert)' },
-    { label: 'DEVENGADO', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--ring-deve)' },
+    { label: 'Cantidad mensual', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
+    { label: 'Certificación (Prog)', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ring-cert)' },
+    { label: 'Devengado (Prog)', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--ring-deve)' },
   ];
 
   progRows.forEach(function(row){
@@ -665,8 +669,8 @@ function renderClasifDetail(c){
   // 6. TABLA DE EJECUCIÓN REAL (SOLO LECTURA)
   if(!isPIA) {
     html += mkMonthlyTable('Ejecución Real', [
-      { label: 'CERT. EJECUTADO', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
-      { label: 'DEVE. EJECUTADO', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
+      { label: 'Cert. Ejecutado', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
+      { label: 'Deve. Ejecutado', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
     ]);
   }
 

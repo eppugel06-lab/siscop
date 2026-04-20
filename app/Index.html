@@ -98,21 +98,23 @@
     --shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
   }
 
-  [data-theme="dark"] {
-    --background: #000000;
-    --surface: rgba(28, 28, 30, 0.7);
-    --surface2: #1c1c1e;
+  /* OLED Pure Black - Apple Pro Dark Theme */
+  :root.dark {
+    --bg: #000000;
+    --surface: rgba(28, 28, 30, 0.8);
+    --surface2: #1C1C1E;
+    --sidebar-bg: rgba(18, 18, 18, 0.94);
+    --sidebar-txt: #EBEBF5;
     --border: rgba(255, 255, 255, 0.12);
-    --border-strong: rgba(255, 255, 255, 0.2);
+    --border2: rgba(255, 255, 255, 0.2);
     --text: #FFFFFF;
-    --text1: #ffffff;
-    --text2: #EBEBF5;
+    --text2: #AEAEB2;
     --text3: #8E8E93;
-    --shadow: 0 4px 16px rgba(0,0,0,0.4);
     --shadow-md: 0 12px 32px rgba(0,0,0,0.6);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    --blur: blur(30px);
   }
+
+  body.dark { background: #000; }
 
   *,
   *::before,
@@ -749,8 +751,7 @@
     border-radius: 6px;
     font-size: 0.65rem;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     border: 1px solid transparent;
     transition: all 0.2s var(--spring);
     white-space: nowrap;
@@ -780,6 +781,12 @@
     color: #FF3B30;
     border-color: rgba(255, 59, 48, 0.2);
   }
+
+  /* Fix Meta Bars */
+  #meta-bar-cert, .fill-green { background: var(--ring-cert); }
+  #meta-bar-deve, .fill-blue { background: var(--ring-deve); }
+  .fill-amber { background: var(--obs); }
+  .fill-red { background: var(--del); }
 
   /* Filter-bar refinements */
   .filter-bar .chip-btn {
@@ -4035,13 +4042,13 @@
 
       <!-- KPIs Secundarios -->
       <div class="bento-item bento-1x1 hide-on-pia">
-        <div class="kpi-label">CERTIFICACIÓN</div>
-        <div class="kpi-val" id="kpi-cert" style="color:var(--ring-cert)">0.0%</div>
+        <div class="kpi-label">Certificación</div>
+        <div class="kpi-val" id="kpi-cert" style="color:var(--ring-cert); flex-direction:column; align-items:flex-start; line-height:1.1">0.0</div>
       </div>
       
       <div class="bento-item bento-1x1 hide-on-pia">
-        <div class="kpi-label">DEVENGADO</div>
-        <div class="kpi-val" id="kpi-deve" style="color:var(--ring-deve)">0.0%</div>
+        <div class="kpi-label">Devengado</div>
+        <div class="kpi-val" id="kpi-deve" style="color:var(--ring-deve); flex-direction:column; align-items:flex-start; line-height:1.1">0.0</div>
       </div>
 
       <!-- Filtros Interactivos (Bento 4x1) -->
@@ -4055,7 +4062,7 @@
             <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> Ok</button>
             <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> Observado</button>
             <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> Agregar</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminado</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminar</button>
           </div>
         </div>
         <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 16px; border-radius:16px; font-weight:700; background:var(--brand-soft); color:var(--brand); border:none">
@@ -4139,12 +4146,12 @@
         </div>
         <div class="hide-on-pia" style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.05)">
           <div class="prog-row">
-            <span class="prog-label">CERTIFICADO</span>
+            <span class="prog-label">Certificado</span>
             <div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%"></div></div>
             <span class="prog-pct" id="meta-pct-cert" style="color:var(--ring-cert)">0%</span>
           </div>
           <div class="prog-row" style="margin-bottom:0">
-            <span class="prog-label">DEVENGADO</span>
+            <span class="prog-label">Devengado</span>
             <div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%"></div></div>
             <span class="prog-pct" id="meta-pct-deve" style="color:var(--ring-deve)">0%</span>
           </div>
@@ -5521,8 +5528,8 @@ function renderDashboardData(d) {
   $('kpi-pia').textContent=fmtS(d.pia);
   if(!isPIA) {
     $('kpi-pim').textContent=fmtS(d.pim);
-    $('kpi-cert').textContent=d.pctCert.toFixed(1)+'%';
-    $('kpi-deve').textContent=d.pctDeve.toFixed(1)+'%';
+    $('kpi-cert').innerHTML=fmtS(d.ejeCertTotal || d.ejeCert || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctCert.toFixed(1) + '%</div>';
+    $('kpi-deve').innerHTML=fmtS(d.ejeDeveTotal || d.ejeDeve || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctDeve.toFixed(1) + '%</div>';
     setTimeout(function(){
       var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
       $('bar-cert').style.width=pC+'%';
@@ -5645,7 +5652,7 @@ function renderDashMetaTable(){
     if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminado</span>' });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminar</span>' });
     if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="s-badge obs">'+m.counts.obs+' Observado</span>' });
     if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="s-badge add">'+m.counts.add+' Agregar</span>' });
     if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="s-badge ok">'+m.counts.ok+' Ok</span>' });
@@ -5794,13 +5801,16 @@ function loadMetaData(sf){
       $('meta-pct-cert').textContent=pC.toFixed(1)+'%';
       $('meta-pct-deve').textContent=pD.toFixed(1)+'%';
     },100);
-    $('meta-kpi-grid').innerHTML=
-      document.body.classList.contains('is-pia') 
-      ? mkKpi('PIA Proyectado',fmtS(d.totales.pia)) + mkKpi('Clasificadores',d.clasificadores.length.toString())
-      : mkKpi('PIM',fmtS(d.totales.pim))+
-        mkKpi('Ejec. Certificado',fmtS(d.totales.ejeCert),pC.toFixed(1)+'%','fill-green')+
-        mkKpi('Ejec. Devengado',fmtS(d.totales.ejeDeve),pD.toFixed(1)+'%','fill-blue')+
-        mkKpi('Clasificadores',d.clasificadores.length.toString());
+    var metaHtml = mkKpi('PIA', fmtS(d.totales.pia || 0));
+    if (document.body.classList.contains('is-pia')) {
+      metaHtml += mkKpi('Clasificadores', d.clasificadores.length.toString());
+    } else {
+      metaHtml += mkKpi('PIM', fmtS(d.totales.pim)) +
+                  mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green') +
+                  mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue') +
+                  mkKpi('Clasificadores', d.clasificadores.length.toString());
+    }
+    $('meta-kpi-grid').innerHTML = metaHtml;
     renderMetaAlerts(d.clasificadores);
     renderClasifSidebar(d.clasificadores,null);
     renderMetaTable();
@@ -6098,7 +6108,7 @@ function renderClasifDetail(c){
     '<div class="card-body" style="padding:24px">' +
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
-        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminado' : c.estado)))) + '</span>' +
+        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminar' : (c.estado === 'Ok' ? 'Ok' : c.estado))))) + '</span>' +
       '</div>' +
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       
@@ -6126,8 +6136,9 @@ function renderClasifDetail(c){
   // 4. BLOQUE DE KPIs
   var isPIA = document.body.classList.contains('is-pia');
   html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +
-    mkKpi(isPIA?'PIA TOTAL':'PIM TOTAL', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
-    (isPIA?'':mkKpi('EJEC. CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('EJEC. DEVENGADO', fmtS(c.ejeDeveTotal))) +
+    mkKpi('PIA', fmtS(c.pia || 0)) +
+    mkKpi(isPIA?'PIA TOTAL':'PIM', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
+    (isPIA?'':mkKpi('CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('DEVENGADO', fmtS(c.ejeDeveTotal))) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
@@ -6145,9 +6156,9 @@ function renderClasifDetail(c){
       '<th>TOTAL</th></tr></thead><tbody>';
 
   var progRows = [
-    { label: 'CANTIDAD MENSUAL', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
-    { label: 'CERTIFICACIÓN', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ring-cert)' },
-    { label: 'DEVENGADO', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--ring-deve)' },
+    { label: 'Cantidad mensual', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
+    { label: 'Certificación (Prog)', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ring-cert)' },
+    { label: 'Devengado (Prog)', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--ring-deve)' },
   ];
 
   progRows.forEach(function(row){
@@ -6160,8 +6171,8 @@ function renderClasifDetail(c){
   // 6. TABLA DE EJECUCIÓN REAL (SOLO LECTURA)
   if(!isPIA) {
     html += mkMonthlyTable('Ejecución Real', [
-      { label: 'CERT. EJECUTADO', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
-      { label: 'DEVE. EJECUTADO', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
+      { label: 'Cert. Ejecutado', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
+      { label: 'Deve. Ejecutado', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
     ]);
   }
 
