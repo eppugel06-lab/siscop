@@ -4021,7 +4021,7 @@
       <div class="bento-item bento-2x2 hide-on-pia" style="justify-content:center; align-items:center;">
         <div class="chart-title" style="position:absolute; top:24px; left:24px; margin:0">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-          <span id="chart-title-text">Ejecución</span> Global
+          Programación Global
         </div>
         
         <div style="position:relative; width:160px; height:160px; margin:0 auto">
@@ -4040,7 +4040,7 @@
           </svg>
           <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center">
             <span id="ring-pct-main" style="font-size:1.8rem; font-weight:800; color:var(--text); letter-spacing:-0.05em; line-height:1">0%</span>
-            <span id="ring-title-text" style="font-size:0.55rem; font-weight:800; color:var(--text3); letter-spacing:0.02em; margin-top:4px">Ejecución</span>
+            <span style="font-size:0.55rem; font-weight:800; color:var(--text3); letter-spacing:0.02em; margin-top:4px">Programación</span>
           </div>
         </div>
         
@@ -5564,12 +5564,6 @@ function renderDashboardData(d) {
       $('bar-deve').className='kpi-bar-fill '+(pD>=80?'fill-green':pD>=50?'fill-amber':'fill-blue');
     },100);
 
-  var perTxt = String(d.periodo || '');
-  var isFuturo = perTxt.indexOf('2027') > -1 || perTxt.indexOf('2028') > -1 || perTxt.indexOf('2029') > -1;
-  var labelMain = isFuturo ? 'Programación' : 'Ejecución';
-  if ($('chart-title-text')) $('chart-title-text').textContent = labelMain;
-  if ($('ring-title-text')) $('ring-title-text').textContent = labelMain;
-
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
@@ -6144,29 +6138,21 @@ function renderClasifDetail(c){
       '<div class="clasif-progress-block hide-on-pia" style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.05)">' +
         '<div class="prog-row"><span class="prog-label">Certificado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%; background:var(--ring-cert)"></div></div><span class="prog-pct" style="color:var(--ring-cert)">' + pC.toFixed(1) + '%</span></div>' +
         '<div class="prog-row" style="margin-bottom:0"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%; background:var(--ring-deve)"></div></div><span class="prog-pct" style="color:var(--ring-deve)">' + pD.toFixed(1) + '%</span></div>' +
-  var html = '<div class="clasif-header">' +
-      '<div style="flex:1"><div style="font-size:0.65rem; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px">Clasificador</div>' +
-      '<div style="font-size:1.1rem; font-weight:800; color:var(--brand); letter-spacing:-0.02em">' + c.clasificador + '</div></div>' +
-      fmtBadge(c.estado || c.status) +
-    '</div>';
-
-  html += '<div class="clasif-desc-card" style="background:var(--bg2); padding:16px; border-radius:12px; margin-bottom:16px; border:1px solid var(--border)">' +
-    '<div style="font-size:0.65rem; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px">Cadena de Recurso</div>' +
-    '<div style="font-size:0.85rem; font-weight:600; color:var(--text1); line-height:1.4">' + c.recurso + '</div>';
-
-  if (c.observacion) {
-    var isObs = (c.estado || c.status || '').toLowerCase().indexOf('obs') > -1;
-    var canFix = isObs && c.observacion.indexOf('difere') > -1;
-    html += '<div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border)">' +
-        '<div style="font-size:0.65rem; font-weight:800; color:' + (isObs ? 'var(--warn)' : 'var(--text3)') + '; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px">Estado del Clasificador</div>' +
-        '<div style="display:flex; align-items:center; justify-content:space-between; gap:12px">' +
-          '<div style="font-size:0.8rem; color:var(--text2); font-weight:500; font-style:italic">' + c.observacion + '</div>' +
+      '</div>' +
+      
+      (!esOk && c.observacion ?
+        '<div class="alert alert-' + typeAlert + '" style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; margin-top:20px; border:none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" id="clasif-alert-obs">' +
+          '<div style="flex-shrink:0">' +
+            '<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+          '</div>' +
+          '<div style="flex:1; font-size:0.8rem; color:var(--text); line-height:1.5;">' +
+            '<strong style="font-weight:700">Observación:</strong> ' + c.observacion +
+          '</div>' +
           (canFix ? 
             '<button onclick="solicitarCorrecion(\'' + S.currentMeta + '\', \'' + c.clasificador + '\', \'' + (c.observacion || '').replace(/'/g, "\\'") + '\')" ' +
                     'class="btn btn-sm" style="background:var(--ok-bg); color:var(--ok-text); border:none; border-radius:8px; font-weight:700; padding:6px 12px">Corregir</button>' : '') +
-        '</div>';
-  }
-  html += '</div>';
+        '</div>' : '') +
+    '</div></div>';
 
   // 4. BLOQUE DE KPIs
   html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +

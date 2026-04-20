@@ -391,8 +391,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
     var est = idx.est >= 0 ? String(f[idx.est] || '').trim() : '';
     var obs = idx.obs >= 0 ? String(f[idx.obs] || '').trim() : '';
 
-    // ── Persistencia PIM (P14: No borrar PIM en modo Programación) ──
-    var pim = _n(f[idx.pim]);
+    // ── Resetear campos de ejecución (PIA = año futuro sin ejecución) ──
+    if (idx.pim >= 0) f[idx.pim] = 0;
     if (idx.tCe >= 0) f[idx.tCe] = 0;
     if (idx.tDe >= 0) f[idx.tDe] = 0;
     for (var m = 0; m < 12; m++) {
@@ -400,8 +400,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       f[idx.eDeMs[m]] = 0;
     }
 
-    // ── REGLA PIM: Clasificador con PIM=0 → Eliminar ──
-    if (pim === 0 && pia === 0) {
+    // ── REGLA PIA: Clasificador con PIA=0 → Eliminar ──
+    if (pia === 0) {
       if (idx.est >= 0) f[idx.est] = 'Eliminar';
       if (idx.obs >= 0) {
         var notaPIA0 = 'PIA es 0 en DEVENGADO. Eliminar de SISPLAN.';
@@ -433,34 +433,34 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       }
     }
 
-    // ── DISTRIBUCIÓN PIM (Zeta Rule: Certificado 100% Enero, Devengado Proporcional) ──
+    // ── Distribución proporcional CERT y DEVE a cantidades físicas (H-02) ──
     var cants  = idx.cants.map(function(i2){ return _n(f[i2]); });
     var totFis = cants.reduce(function(a, b){ return a + b; }, 0);
     var certArray = new Array(12).fill(0);
     var deveArray = new Array(12).fill(0);
 
-    // Certificado: 100% PIM en Enero
-    certArray[0] = pim;
-
-    if (totFis > 0 && pim > 0) {
-      var acumD = 0, ultActivo = -1;
+    if (totFis > 0 && pia > 0) {
+      var acum = 0, ultActivo = -1;
       for (var m3 = 0; m3 < 12; m3++) {
         if (cants[m3] > 0) {
-          var cuotaD = Math.floor((pim * (cants[m3] / totFis)) * 100) / 100;
-          deveArray[m3] = cuotaD;
-          acumD += cuotaD;
+          var cuota = Math.floor((pia * (cants[m3] / totFis)) * 100) / 100;
+          deveArray[m3] = cuota;
+          certArray[m3] = cuota;
+          acum += cuota;
           ultActivo = m3;
         }
       }
-      var deltaD = Math.round((pim - acumD) * 100) / 100;
+      var delta = Math.round((pia - acum) * 100) / 100;
       if (ultActivo >= 0) {
-        deveArray[ultActivo] = Math.round((deveArray[ultActivo] + deltaD) * 100) / 100;
+        deveArray[ultActivo] = Math.round((deveArray[ultActivo] + delta) * 100) / 100;
+        certArray[ultActivo] = Math.round((certArray[ultActivo] + delta) * 100) / 100;
       }
-    } else if (pim > 0) {
-      // Sin meses activos → Devengado a Enero con observación
-      deveArray[0] = pim;
+    } else if (pia > 0) {
+      // Sin meses activos → todo a Enero con observación (H-14)
+      deveArray[0] = pia;
+      certArray[0] = pia;
       if (idx.obs >= 0) {
-        var notaSinMeses = 'Sin meses activos en SISPLAN. PIM asignado a Enero.';
+        var notaSinMeses = 'Sin meses activos en SISPLAN. PIA asignado a Enero.';
         var obsActual = String(f[idx.obs] || '');
         if (obsActual.indexOf(notaSinMeses) === -1) {
           f[idx.obs] = obsActual ? obsActual + ' | ' + notaSinMeses : notaSinMeses;
@@ -472,8 +472,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       f[idx.cMs[m4]] = certArray[m4];
       f[idx.dMs[m4]] = deveArray[m4];
     }
-    f[idx.cTot] = pim;
-    f[idx.dTot] = pim;
+    f[idx.cTot] = pia;
+    f[idx.dTot] = pia;
 
     filtrado.push(f);
   }
