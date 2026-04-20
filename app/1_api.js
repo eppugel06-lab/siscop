@@ -169,13 +169,22 @@ function getResumenGeneral() {
     if (!hC) return null;
 
     var enc = _getEnc(hC, CONFIG.filasEnc.consolidado);
+    // Mapeo robusto: buscamos nombres exactos o aproximados
+    var findCol = function(list, keys) {
+      for(var k=0; k<keys.length; k++) {
+        var i = list.indexOf(keys[k]);
+        if(i>=0) return i;
+      }
+      return -1;
+    };
+
     var idx = {
-      sf:    _idx(enc,'SEC_FUNC'),
-      den:   _idx(enc,'DENOMINACION_AO'),
-      pia:   _idx(enc,'MTO_PIA'),
-      pim:   _idx(enc,'MTO_PIM'),
-      tCert: _idx(enc,'TOTAL_EJEC_CERTIF'),
-      tDeve: _idx(enc,'TOTAL_EJEC_DEV'),
+      sf:    findCol(enc, ['SEC_FUNC']),
+      den:   findCol(enc, ['DENOMINACION_AO', 'DENOMINACION']),
+      pia:   findCol(enc, ['MTO_PIA']),
+      pim:   findCol(enc, ['MTO_PIM']),
+      tCert: findCol(enc, ['TOTAL_EJEC_CERTIF', 'CERTIFICACION_TOTAL']),
+      tDeve: findCol(enc, ['TOTAL_EJEC_DEV', 'DEVENGADO_TOTAL', 'TOTAL_EJEC_DEVEN']),
       est:   enc.indexOf('ESTADO')
     };
 

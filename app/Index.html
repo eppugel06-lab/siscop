@@ -5596,14 +5596,12 @@ function renderDashboardData(d) {
   if ($('res-add-count')) $('res-add-count').textContent = d.estadosCount.agregar;
   if ($('res-del-count')) $('res-del-count').textContent = d.estadosCount.eliminar;
   
-  // Reiniciamos estado y preparamos la paginación del Dashboard
+  // 6. RENDERIZADO DE TABLAS Y GRÁFICOS (RESTAURADO P22)
+  if (!d.metas) d.metas = [];
   S.dashMetaFiltered = d.metas.slice();
   S.dashMetaPage = 1;
-  if($('dash-meta-search')) $('dash-meta-search').value = '';
-  
-  // Inicialización de charts
+
   updateDashboardCharts(d.metas);
-  
   renderDashMetaTable();
 }
 
