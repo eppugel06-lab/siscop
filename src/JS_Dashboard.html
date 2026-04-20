@@ -15,11 +15,23 @@ function loadDashboard(){
 }
 
 function renderDashboardData(d) {
-  // Siempre mostrar PIM como base ahora que el proceso es Programación PIM
-  document.body.classList.remove('is-pia');
-
   $('dash-skeleton').style.display='none';
   $('dash-content').style.display='block';
+  
+  // Detección Dinámica de Año (P17.3: Año > Año Actual)
+  var curYear = new Date().getFullYear();
+  var perTxt = String(d.periodo || '');
+  var sbAnio = ($('sb-periodo-anio')) ? $('sb-periodo-anio').textContent : '';
+  
+  var extractYear = function(s){ var m=String(s).match(/\d{4}/); return m?parseInt(m[0]):0; };
+  var yearData = extractYear(perTxt);
+  var yearSys  = extractYear(sbAnio);
+  
+  var isFuturo = (yearData > curYear) || (yearSys > curYear);
+  
+  // Aplicar modo limpieza Programación (is-pia) si el año es futuro
+  document.body.classList.toggle('is-pia', isFuturo);
+
   $('kpi-pia').textContent=fmtS(d.pia);
   $('kpi-pim').textContent=fmtS(d.pim);
   var amtCert = d.ejeCertTotal || d.ejeCert || (d.pctCert / 100 * d.pim);
@@ -37,15 +49,12 @@ function renderDashboardData(d) {
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
-  // Dinamismo de Labels (P16) e Interface Mode (P17)
-  var perTxt = String(d.periodo || '');
-  var isFuturo = perTxt.indexOf('2027') > -1 || perTxt.indexOf('2028') > -1 || perTxt.indexOf('2029') > -1;
+  $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
+  $('sb-periodo').textContent=d.periodo;
+
   var labelMain = isFuturo ? 'Programación' : 'Ejecución';
   if ($('chart-title-text')) $('chart-title-text').textContent = labelMain;
   if ($('ring-title-text')) $('ring-title-text').textContent = labelMain;
-  
-  // Aplicar modo limpieza 2027+ a nivel global
-  document.body.classList.toggle('is-pia', isFuturo);
 
   // Actualizar los números de los botones interactivos
   if ($('res-ok-count')) $('res-ok-count').textContent = d.estadosCount.ok;
