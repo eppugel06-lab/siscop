@@ -1,5 +1,8 @@
 <div class="page" id="page-meta">
-  <div class="page-header"><h1>Dashboard por Meta</h1><p>Análisis detallado por Secuencia Funcional</p></div>
+  <div class="page-header" style="margin-bottom:28px">
+    <h1 style="font-size:1.5rem; font-weight:800; letter-spacing:-0.03em">Dashboard por Meta</h1>
+    <p style="font-size:0.85rem; color:var(--text3); font-weight:500">Análisis detallado por Secuencia Funcional</p>
+  </div>
   <div id="meta-no-data" class="alert alert-info">
     <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     Selecciona una meta en el selector superior para ver los datos.
@@ -10,18 +13,26 @@
     <div class="sk-card" style="height:200px"></div>
   </div>
   <div id="meta-content" style="display:none">
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-body">
-        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
-          <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:.95rem;font-weight:700;padding:7px 12px;border-radius:8px;flex-shrink:0" id="meta-secfunc-badge">—</div>
+    <div class="card" style="margin-bottom:24px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
+      <div class="card-body" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:1rem;font-weight:800;padding:8px 14px;border-radius:12px;box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);flex-shrink:0" id="meta-secfunc-badge">—</div>
           <div style="flex:1">
-            <div style="font-size:.95rem;font-weight:700;color:var(--text)" id="meta-denom">—</div>
-            <div style="font-size:.75rem;color:var(--text3);margin-top:2px">Unidad de medida: <span id="meta-um" style="font-weight:600;color:var(--text2)">—</span></div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-0.01em" id="meta-denom">—</div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:2px;font-weight:500">Unidad de medida: <span id="meta-um" style="font-weight:700;color:var(--text2)">—</span></div>
           </div>
         </div>
-        <div class="hide-on-pia" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-          <div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%;background:var(--ok)"></div></div><span class="prog-pct" id="meta-pct-cert" style="color:var(--ok)">0%</span></div>
-          <div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%;background:var(--accent)"></div></div><span class="prog-pct" id="meta-pct-deve" style="color:var(--accent)">0%</span></div>
+        <div class="hide-on-pia" style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.05)">
+          <div class="prog-row">
+            <span class="prog-label">CERTIFICADO</span>
+            <div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%"></div></div>
+            <span class="prog-pct" id="meta-pct-cert" style="color:var(--ring-cert)">0%</span>
+          </div>
+          <div class="prog-row" style="margin-bottom:0">
+            <span class="prog-label">DEVENGADO</span>
+            <div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%"></div></div>
+            <span class="prog-pct" id="meta-pct-deve" style="color:var(--ring-deve)">0%</span>
+          </div>
         </div>
       </div>
     </div>

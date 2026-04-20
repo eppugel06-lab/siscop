@@ -345,55 +345,7 @@
     pointer-events: none
   }
 
-  .sb-profile {
-    margin: 8px 12px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, .04);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, .06);
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .sp-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: .9rem;
-    flex-shrink: 0;
-  }
-
-  .sp-info {
-    flex: 1;
-    overflow: hidden
-  }
-
-  .sp-name {
-    font-size: .78rem;
-    font-weight: 600;
-    color: #E2E8F0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-  }
-
-  .sp-role {
-    font-size: .6rem;
-    color: #475569;
-    font-family: var(--mono);
-    margin-top: 1px;
-    display: inline-block;
-    padding: 1px 5px;
-    background: rgba(255, 255, 255, .07);
-    border-radius: 4px
-  }
+  /* --- sp-profile removed (duplicate) --- */
 
   #sidebar-footer {
     padding: 12px 14px;
@@ -708,37 +660,61 @@
     margin-top: 3px
   }
 
-  .kpi-bar-wrap {
-    margin-top: 8px
-  }
-
-  .kpi-bar-bg {
+  .prog-track, .kpi-bar-bg {
     background: var(--border);
     border-radius: 99px;
     height: 4px;
-    overflow: hidden
+    overflow: hidden;
+    margin: 8px 0;
   }
 
-  .kpi-bar-fill {
+  .prog-fill, .kpi-bar-fill {
     height: 100%;
     border-radius: 99px;
-    transition: width 1s ease
+    transition: width 1s var(--spring);
   }
 
-  .fill-green {
-    background: var(--ok)
+  .prog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .prog-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text2);
+    min-width: 80px;
+  }
+  
+  .prog-track {
+    flex: 1;
+    margin: 0;
+  }
+  
+  .prog-pct {
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    min-width: 45px;
+    text-align: right;
+  }
+
+  .fill-green, [id*="bar-cert"] {
+    background: var(--ring-cert);
   }
 
   .fill-amber {
-    background: var(--obs)
+    background: var(--obs);
   }
 
   .fill-red {
-    background: var(--del)
+    background: var(--del);
   }
 
-  .fill-blue {
-    background: var(--accent)
+  .fill-blue, [id*="bar-deve"] {
+    background: var(--ring-deve);
   }
 
   /* Badges */
@@ -4044,7 +4020,10 @@
     </div>
   </div>
 </div>      <div class="page" id="page-meta">
-  <div class="page-header"><h1>Dashboard por Meta</h1><p>Análisis detallado por Secuencia Funcional</p></div>
+  <div class="page-header" style="margin-bottom:28px">
+    <h1 style="font-size:1.5rem; font-weight:800; letter-spacing:-0.03em">Dashboard por Meta</h1>
+    <p style="font-size:0.85rem; color:var(--text3); font-weight:500">Análisis detallado por Secuencia Funcional</p>
+  </div>
   <div id="meta-no-data" class="alert alert-info">
     <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     Selecciona una meta en el selector superior para ver los datos.
@@ -4055,18 +4034,26 @@
     <div class="sk-card" style="height:200px"></div>
   </div>
   <div id="meta-content" style="display:none">
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-body">
-        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
-          <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:.95rem;font-weight:700;padding:7px 12px;border-radius:8px;flex-shrink:0" id="meta-secfunc-badge">—</div>
+    <div class="card" style="margin-bottom:24px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
+      <div class="card-body" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:1rem;font-weight:800;padding:8px 14px;border-radius:12px;box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);flex-shrink:0" id="meta-secfunc-badge">—</div>
           <div style="flex:1">
-            <div style="font-size:.95rem;font-weight:700;color:var(--text)" id="meta-denom">—</div>
-            <div style="font-size:.75rem;color:var(--text3);margin-top:2px">Unidad de medida: <span id="meta-um" style="font-weight:600;color:var(--text2)">—</span></div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-0.01em" id="meta-denom">—</div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:2px;font-weight:500">Unidad de medida: <span id="meta-um" style="font-weight:700;color:var(--text2)">—</span></div>
           </div>
         </div>
-        <div class="hide-on-pia" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-          <div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%;background:var(--ok)"></div></div><span class="prog-pct" id="meta-pct-cert" style="color:var(--ok)">0%</span></div>
-          <div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%;background:var(--accent)"></div></div><span class="prog-pct" id="meta-pct-deve" style="color:var(--accent)">0%</span></div>
+        <div class="hide-on-pia" style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.05)">
+          <div class="prog-row">
+            <span class="prog-label">CERTIFICADO</span>
+            <div class="prog-track"><div class="prog-fill" id="meta-bar-cert" style="width:0%"></div></div>
+            <span class="prog-pct" id="meta-pct-cert" style="color:var(--ring-cert)">0%</span>
+          </div>
+          <div class="prog-row" style="margin-bottom:0">
+            <span class="prog-label">DEVENGADO</span>
+            <div class="prog-track"><div class="prog-fill" id="meta-bar-deve" style="width:0%"></div></div>
+            <span class="prog-pct" id="meta-pct-deve" style="color:var(--ring-deve)">0%</span>
+          </div>
         </div>
       </div>
     </div>
@@ -6013,58 +6000,50 @@ function renderClasifDetail(c){
 
   // 3. CONSTRUCCIÓN DEL BLOQUE DE CABECERA Y ALERTAS
   var html = '';
-  html += '<div class="card" style="margin-bottom:10px"><div class="card-body">' +
-    '<div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
-      '<span style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)">' + c.clasificador + '</span>' +
-      '<span class="badge ' + badgeClass(c.estado) + '">' + c.estado + '</span>' +
-    '</div>' +
-    '<div style="margin-top:5px;font-size:.8rem;color:var(--text2);font-weight:500;line-height:1.3">' + c.recurso + '</div>' +
-    '<div class="clasif-progress-block hide-on-pia" style="margin-top:12px">' +
-      '<div class="prog-row"><span class="prog-label">Certificación</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%;background:var(--ok)"></div></div><span class="prog-pct" style="color:var(--ok)">' + pC.toFixed(1) + '%</span></div>' +
-      '<div class="prog-row"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%;background:var(--accent)"></div></div><span class="prog-pct" style="color:var(--accent)">' + pD.toFixed(1) + '%</span></div>' +
-    '</div>' +
-    
-    // --- NUEVO DISEÑO COMPACTO PARA ALERTA INDIVIDUAL (Stitch UI) ---
-    (!esOk && c.observacion ?
-      '<div class="alert alert-' + typeAlert + '" style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; margin-top:16px;" id="clasif-alert-obs">' +
-        '<div style="flex-shrink:0; display:flex;">' +
-          '<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
-        '</div>' +
-        '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;">' +
-          '<div style="font-size:0.75rem; color:var(--text2); line-height:1.4;">' +
-            '<span class="badge ' + badgeClass(c.estado) + '" style="font-size:0.6rem; padding:2px 6px; margin-right:6px; vertical-align:middle;">' + c.estado + '</span>' +
-            '<strong style="color:var(--text);">' + c.clasificador + '</strong> — ' + c.observacion +
+  html += '<div class="card" style="margin-bottom:16px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
+    '<div class="card-body" style="padding:24px">' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
+        '<span class="badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || c.estado) + '</span>' +
+      '</div>' +
+      '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
+      
+      '<div class="clasif-progress-block hide-on-pia" style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.05)">' +
+        '<div class="prog-row"><span class="prog-label">CERTIFICADO</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%; background:var(--ring-cert)"></div></div><span class="prog-pct" style="color:var(--ring-cert)">' + pC.toFixed(1) + '%</span></div>' +
+        '<div class="prog-row" style="margin-bottom:0"><span class="prog-label">DEVENGADO</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%; background:var(--ring-deve)"></div></div><span class="prog-pct" style="color:var(--ring-deve)">' + pD.toFixed(1) + '%</span></div>' +
+      '</div>' +
+      
+      (!esOk && c.observacion ?
+        '<div class="alert alert-' + typeAlert + '" style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; margin-top:20px; border:none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" id="clasif-alert-obs">' +
+          '<div style="flex-shrink:0">' +
+            '<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
           '</div>' +
-        '</div>' +
-        (canFix ? 
-          '<div style="flex-shrink:0; margin-left:8px;">' +
-            '<button onclick="solicitarCorrecion(\'' + S.currentMeta + '\', \'' + c.clasificador + '\', \'' + c.observacion.replace(/'/g, "\\'") + '\')" ' +
-                    'title="Marcar como corregido" ' +
-                    'style="background:rgba(34,197,94,0.1); color:#4ADE80; border:1px solid rgba(34,197,94,0.3); border-radius:6px; padding:6px 12px; font-size:0.7rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;" ' +
-                    'onmouseover="this.style.background=\'rgba(34,197,94,0.2)\'" onmouseout="this.style.background=\'rgba(34,197,94,0.1)\'">' +
-              '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
-              'Corregir' +
-            '</button>' +
-          '</div>' 
-        : '') +
-      '</div>' 
-    : '') +
-  '</div></div>';
+          '<div style="flex:1; font-size:0.8rem; color:var(--text); line-height:1.5;">' +
+            '<strong style="font-weight:700">Observación:</strong> ' + c.observacion +
+          '</div>' +
+          (canFix ? 
+            '<button onclick="solicitarCorrecion(\'' + S.currentMeta + '\', \'' + c.clasificador + '\', \'' + (c.observacion || '').replace(/'/g, "\\'") + '\')" ' +
+                    'class="btn btn-sm" style="background:var(--ok-bg); color:var(--ok-text); border:none; border-radius:8px; font-weight:700; padding:6px 12px">Corregir</button>' : '') +
+        '</div>' : '') +
+    '</div></div>';
 
   // 4. BLOQUE DE KPIs
   var isPIA = document.body.classList.contains('is-pia');
-  html += '<div class="kpi-grid" style="margin-bottom:10px">' +
-    mkKpi(isPIA?'PIA':'PIM', fmtS(isPIA?c.pia:c.pim)) + mkKpi('Meta Física', c.totalFisico + ' meses') +
-    (isPIA?'':mkKpi('Ejec. Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Ejec. Devengado', fmtS(c.ejeDeveTotal))) +
+  // 4. BLOQUE DE KPIs
+  var isPIA = document.body.classList.contains('is-pia');
+  html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +
+    mkKpi(isPIA?'PIA TOTAL':'PIM TOTAL', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
+    (isPIA?'':mkKpi('EJEC. CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('EJEC. DEVENGADO', fmtS(c.ejeDeveTotal))) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
-  html += '<div class="card" style="margin-bottom:10px">' +
-    '<div class="card-header">' +
-      '<span class="card-title">Programación</span>' +
-      (canFix ? '<button class="btn btn-secondary btn-sm ep-edit-btn" data-code="' + c.clasificador + '">' +
-        '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-        'Editar</button>' : '') +
+  // 5. TABLA DE PROGRAMACIÓN MENSUAL (Bento Style Card)
+  html += '<div class="card" style="margin-bottom:16px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
+    '<div class="card-header" style="padding:16px 24px; border-bottom:1px solid rgba(0,0,0,0.05)">' +
+      '<span class="card-title" style="font-size:0.9rem">Programación Financiera</span>' +
+      (canFix ? '<button class="btn btn-secondary btn-sm ep-edit-btn" data-code="' + c.clasificador + '" style="border-radius:20px; padding:6px 14px; background:var(--brand-soft); color:var(--brand); border:none">' +
+        '<svg viewBox="0 0 24 24" style="width:14px;height:14px;margin-right:6px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        'Ajustar</button>' : '') +
     '</div>' +
     '<div class="monthly-wrap"><table class="monthly-table"><thead><tr>' +
       '<th class="lbl">Concepto</th>' +
@@ -6073,14 +6052,14 @@ function renderClasifDetail(c){
 
   var progRows = [
     { label: 'CANTIDAD MENSUAL', data: c.cantM, total: c.totalFisico, isInt: true, color: 'var(--text2)' },
-    { label: 'CERTIFICACIÓN', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ok)' },
-    { label: 'DEVENGADO', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--accent)' },
+    { label: 'CERTIFICACIÓN', data: c.certM, total: c.certTotal, isInt: false, color: 'var(--ring-cert)' },
+    { label: 'DEVENGADO', data: c.deveM, total: c.deveTotal, isInt: false, color: 'var(--ring-deve)' },
   ];
 
   progRows.forEach(function(row){
-    html += '<tr><td class="lbl" style="color:' + row.color + '">' + row.label + '</td>' +
+    html += '<tr><td class="lbl" style="color:' + row.color + '; font-weight:700">' + row.label + '</td>' +
       row.data.map(function(v){ return '<td>' + (row.isInt ? fmtI(v) : fmtN(v)) + '</td>'; }).join('') +
-      '<td class="total-col">' + (row.isInt ? fmtI(row.total) : fmtN(row.total)) + '</td></tr>';
+      '<td class="total-col" style="font-weight:800">' + (row.isInt ? fmtI(row.total) : fmtN(row.total)) + '</td></tr>';
   });
   html += '</tbody></table></div></div>';
 
@@ -6106,16 +6085,16 @@ function renderClasifDetail(c){
 }
 
 function mkMonthlyTable(title,rows){
-  var h='<div class="card" style="margin-bottom:10px">'+
-    '<div class="card-header"><span class="card-title">'+title+'</span></div>'+
+  var h='<div class="card" style="margin-bottom:16px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">'+
+    '<div class="card-header" style="padding:16px 24px; border-bottom:1px solid rgba(0,0,0,0.05)"><span class="card-title" style="font-size:0.9rem">'+title+'</span></div>'+
     '<div class="monthly-wrap"><table class="monthly-table"><thead><tr>'+
       '<th class="lbl">Concepto</th>'+
       MESES_C.map(function(m){return '<th>'+m+'</th>';}).join('')+
       '<th>TOTAL</th></tr></thead><tbody>';
   rows.forEach(function(row){
-    h+='<tr><td class="lbl" style="color:'+row.color+'">'+row.label+'</td>'+
+    h+='<tr><td class="lbl" style="color:'+row.color+'; font-weight:700">'+row.label+'</td>'+
       row.data.map(function(v){return '<td>'+(row.isInt?fmtI(v):fmtN(v))+'</td>';}).join('')+
-      '<td class="total-col">'+(row.isInt?fmtI(row.total):fmtN(row.total))+'</td></tr>';
+      '<td class="total-col" style="font-weight:800">'+(row.isInt?fmtI(row.total):fmtN(row.total))+'</td></tr>';
   });
   h+='</tbody></table></div></div>';
   return h;

@@ -306,55 +306,7 @@
     pointer-events: none
   }
 
-  .sb-profile {
-    margin: 8px 12px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, .04);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, .06);
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .sp-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: .9rem;
-    flex-shrink: 0;
-  }
-
-  .sp-info {
-    flex: 1;
-    overflow: hidden
-  }
-
-  .sp-name {
-    font-size: .78rem;
-    font-weight: 600;
-    color: #E2E8F0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-  }
-
-  .sp-role {
-    font-size: .6rem;
-    color: #475569;
-    font-family: var(--mono);
-    margin-top: 1px;
-    display: inline-block;
-    padding: 1px 5px;
-    background: rgba(255, 255, 255, .07);
-    border-radius: 4px
-  }
+  /* --- sp-profile removed (duplicate) --- */
 
   #sidebar-footer {
     padding: 12px 14px;
@@ -669,37 +621,61 @@
     margin-top: 3px
   }
 
-  .kpi-bar-wrap {
-    margin-top: 8px
-  }
-
-  .kpi-bar-bg {
+  .prog-track, .kpi-bar-bg {
     background: var(--border);
     border-radius: 99px;
     height: 4px;
-    overflow: hidden
+    overflow: hidden;
+    margin: 8px 0;
   }
 
-  .kpi-bar-fill {
+  .prog-fill, .kpi-bar-fill {
     height: 100%;
     border-radius: 99px;
-    transition: width 1s ease
+    transition: width 1s var(--spring);
   }
 
-  .fill-green {
-    background: var(--ok)
+  .prog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .prog-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text2);
+    min-width: 80px;
+  }
+  
+  .prog-track {
+    flex: 1;
+    margin: 0;
+  }
+  
+  .prog-pct {
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    min-width: 45px;
+    text-align: right;
+  }
+
+  .fill-green, [id*="bar-cert"] {
+    background: var(--ring-cert);
   }
 
   .fill-amber {
-    background: var(--obs)
+    background: var(--obs);
   }
 
   .fill-red {
-    background: var(--del)
+    background: var(--del);
   }
 
-  .fill-blue {
-    background: var(--accent)
+  .fill-blue, [id*="bar-deve"] {
+    background: var(--ring-deve);
   }
 
   /* Badges */
