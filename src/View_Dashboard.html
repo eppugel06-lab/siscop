@@ -16,12 +16,16 @@
 
   <div id="dash-skeleton" style="display:none">
     <div class="kpi-grid">
-      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
-      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
-      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
-      <div class="sk-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:80%;height:24px"></div></div>
+      <div class="sk-card" style="height:100px"></div>
+      <div class="sk-card" style="height:100px"></div>
+      <div class="sk-card" style="height:100px"></div>
+      <div class="sk-card" style="height:100px"></div>
     </div>
-    <div class="sk-card" style="height:200px; margin-top:20px;"></div>
+    <div class="chart-grid">
+      <div class="sk-card" style="height:350px"></div>
+      <div class="sk-card" style="height:350px"></div>
+    </div>
+    <div class="sk-card" style="height:400px; margin-top:24px;"></div>
   </div>
 
   <div id="dash-content">
@@ -37,6 +41,28 @@
       <div class="kpi-card hide-on-pia">
         <div class="kpi-label">Devengado</div><div class="kpi-val" id="kpi-deve">—</div>
         <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-deve" style="width:0%"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="chart-grid">
+      <div class="chart-box">
+        <div class="chart-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg>
+          Comparativa Presupuestal
+        </div>
+        <div style="flex:1; position:relative;">
+          <canvas id="chart-main"></canvas>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+          Eficiencia de Ejecución
+        </div>
+        <div style="flex:1; position:relative; display:flex; align-items:center; justify-content:center;">
+          <canvas id="chart-gauge" style="max-height:240px"></canvas>
+        </div>
       </div>
     </div>
 
