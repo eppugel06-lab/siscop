@@ -103,10 +103,10 @@
             <span style="font-size: 1rem; font-weight:700; color:var(--text); letter-spacing:-0.02em">Estado Global</span>
           </div>
           <div class="filter-bar" style="margin:0; background:var(--surface2); border:none; padding:4px; border-radius:12px; display:flex; gap:2px">
-            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> OK</button>
-            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> OBS</button>
-            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> ADD</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> DEL</button>
+            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> Ok</button>
+            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> Observado</button>
+            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> Agregar</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminado</button>
           </div>
         </div>
         <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 16px; border-radius:16px; font-weight:700; background:var(--brand-soft); color:var(--brand); border:none">
@@ -127,16 +127,7 @@
             <span id="dash-meta-count" style="font-size:.75rem;color:var(--text3);font-family:var(--mono);font-weight:normal;margin-left:8px;background:var(--surface2);padding:2px 8px;border-radius:12px;"></span>
           </span>
           
-          <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom: 0; padding: 0; background: transparent; border: none;">
-            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" title="Filtrar metas sin observaciones"><span id="res-ok-count">0</span> Ok</button>
-            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" title="Filtrar metas con diferencias de AO/UM"><span id="res-obs-count">0</span> Obs</button>
-            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" title="Filtrar clasificadores nuevos detectados"><span id="res-add-count">0</span> Add</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" title="Filtrar ítems que ya no figuran en Devengado"><span id="res-del-count">0</span> Del</button>
-            
-            <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none;" title="Quitar filtros">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
+          <div id="dash-meta-pagination" class="pagination" style="margin:0"></div>
         </div>
 
         <div class="meta-controls" style="margin-bottom:0">

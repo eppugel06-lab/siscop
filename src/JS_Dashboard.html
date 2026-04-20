@@ -150,10 +150,10 @@ function renderDashMetaTable(){
     if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="micro-badge del">'+m.counts.del+' Del</span>' });
-    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="micro-badge obs">'+m.counts.obs+' Obs</span>' });
-    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="micro-badge add">'+m.counts.add+' Add</span>' });
-    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="micro-badge ok">'+m.counts.ok+' Ok</span>' });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminado</span>' });
+    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="s-badge obs">'+m.counts.obs+' Observado</span>' });
+    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="s-badge add">'+m.counts.add+' Agregar</span>' });
+    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="s-badge ok">'+m.counts.ok+' Ok</span>' });
 
     // Si hay un filtro activo, empujamos ese ID al inicio de la lista
     if (dashFiltroEstado !== 'ALL') {
@@ -603,7 +603,7 @@ function renderClasifDetail(c){
     '<div class="card-body" style="padding:24px">' +
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
-        '<span class="badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || c.estado) + '</span>' +
+        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminado' : c.estado)))) + '</span>' +
       '</div>' +
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       

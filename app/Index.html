@@ -741,43 +741,64 @@
     letter-spacing: -0.01em;
   }
 
-  /* Badges */
-  .badge {
+  /* Universal Badge Pro (Apple Glass Style) */
+  .s-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
-    border-radius: 99px;
-    font-size: .62rem;
-    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .04em;
-    white-space: nowrap
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+    transition: all 0.2s var(--spring);
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   }
 
-  .badge.ok {
-    background: var(--ok-bg);
-    color: var(--ok-text)
+  .s-badge.ok, .chip-btn.ok {
+    background: rgba(52, 199, 89, 0.1);
+    color: #248A3D;
+    border-color: rgba(52, 199, 89, 0.2);
   }
 
-  .badge.obs {
-    background: var(--obs-bg);
-    color: var(--obs-text)
+  .s-badge.obs, .chip-btn.obs {
+    background: rgba(255, 149, 0, 0.1);
+    color: #B26B00;
+    border-color: rgba(255, 149, 0, 0.2);
   }
 
-  .badge.add {
-    background: var(--add-bg);
-    color: var(--add-text)
+  .s-badge.add, .chip-btn.add {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+    border-color: rgba(0, 122, 255, 0.2);
   }
 
-  .badge.del {
-    background: var(--del-bg);
-    color: var(--del-text)
+  .s-badge.del, .chip-btn.del {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+    border-color: rgba(255, 59, 48, 0.2);
   }
 
-  .badge.none {
-    background: var(--surface2);
-    color: var(--text3);
-    border: 1px solid var(--border)
+  /* Filter-bar refinements */
+  .filter-bar .chip-btn {
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s var(--spring);
+  }
+
+  .filter-bar .chip-btn:hover {
+    background: rgba(0,0,0,0.05);
+  }
+
+  .filter-bar .chip-btn.active {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
   /* Card */
@@ -4031,10 +4052,10 @@
             <span style="font-size: 1rem; font-weight:700; color:var(--text); letter-spacing:-0.02em">Estado Global</span>
           </div>
           <div class="filter-bar" style="margin:0; background:var(--surface2); border:none; padding:4px; border-radius:12px; display:flex; gap:2px">
-            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> OK</button>
-            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> OBS</button>
-            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> ADD</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> DEL</button>
+            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> Ok</button>
+            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> Observado</button>
+            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> Agregar</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> Eliminado</button>
           </div>
         </div>
         <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 16px; border-radius:16px; font-weight:700; background:var(--brand-soft); color:var(--brand); border:none">
@@ -4055,16 +4076,7 @@
             <span id="dash-meta-count" style="font-size:.75rem;color:var(--text3);font-family:var(--mono);font-weight:normal;margin-left:8px;background:var(--surface2);padding:2px 8px;border-radius:12px;"></span>
           </span>
           
-          <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom: 0; padding: 0; background: transparent; border: none;">
-            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" title="Filtrar metas sin observaciones"><span id="res-ok-count">0</span> Ok</button>
-            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" title="Filtrar metas con diferencias de AO/UM"><span id="res-obs-count">0</span> Obs</button>
-            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" title="Filtrar clasificadores nuevos detectados"><span id="res-add-count">0</span> Add</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" title="Filtrar ítems que ya no figuran en Devengado"><span id="res-del-count">0</span> Del</button>
-            
-            <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none;" title="Quitar filtros">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
+          <div id="dash-meta-pagination" class="pagination" style="margin:0"></div>
         </div>
 
         <div class="meta-controls" style="margin-bottom:0">
@@ -5633,10 +5645,10 @@ function renderDashMetaTable(){
     if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="micro-badge del">'+m.counts.del+' Del</span>' });
-    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="micro-badge obs">'+m.counts.obs+' Obs</span>' });
-    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="micro-badge add">'+m.counts.add+' Add</span>' });
-    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="micro-badge ok">'+m.counts.ok+' Ok</span>' });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminado</span>' });
+    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="s-badge obs">'+m.counts.obs+' Observado</span>' });
+    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="s-badge add">'+m.counts.add+' Agregar</span>' });
+    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="s-badge ok">'+m.counts.ok+' Ok</span>' });
 
     // Si hay un filtro activo, empujamos ese ID al inicio de la lista
     if (dashFiltroEstado !== 'ALL') {
@@ -6086,7 +6098,7 @@ function renderClasifDetail(c){
     '<div class="card-body" style="padding:24px">' +
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
-        '<span class="badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || c.estado) + '</span>' +
+        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminado' : c.estado)))) + '</span>' +
       '</div>' +
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       
