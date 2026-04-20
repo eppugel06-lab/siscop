@@ -706,11 +706,9 @@ function mkMonthlyTable(title,rows){
   h+='</tbody></table></div></div>';
   return h;
 }
-/* ═══ LÓGICA DE GRÁFICOS (CHART.JS) ═══ */
-var _charts = { main: null, gauge: null };
-
+/* ═══ LÓGICA DE GRÁFICOS (ACTIVITY RINGS SVG) ═══ */
 function updateDashboardCharts(metas) {
-  if (!window.Chart || !metas) return;
+  if (!metas) return;
   
   // Agregamos métricas de las metas proporcionadas
   var t = metas.reduce(function(acc, m) {
@@ -721,97 +719,30 @@ function updateDashboardCharts(metas) {
     return acc;
   }, { pia: 0, pim: 0, cert: 0, deve: 0 });
 
-  var isDark = document.documentElement.classList.contains('dark');
-  var textColor = isDark ? '#8E8E93' : '#3A3A3C';
-  var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-
-  // --- CHART 1: COMPARATIVA (Barras Horizontales) ---
-  var ctxMain = $('chart-main').getContext('2d');
-  if (_charts.main) _charts.main.destroy();
+  // Update KPI Raw Values
+  if ($('kpi-pia')) $('kpi-pia').textContent = fmtS(t.pia);
+  if ($('kpi-pim')) $('kpi-pim').textContent = fmtS(t.pim);
   
-  _charts.main = new Chart(ctxMain, {
-    type: 'bar',
-    data: {
-      labels: ['PIA', 'PIM', 'Certificado', 'Devengado'],
-      datasets: [{
-        data: [t.pia, t.pim, t.cert, t.deve],
-        backgroundColor: [
-          'rgba(142, 142, 147, 0.6)', // PIA - Gray
-          'rgba(0, 122, 255, 0.6)',   // PIM - Blue
-          'rgba(52, 199, 89, 0.6)',   // Cert - Green
-          'rgba(255, 149, 0, 0.6)'    // Deve - Orange
-        ],
-        borderRadius: 6,
-        borderWidth: 0,
-        barThickness: 24
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: function(c) { return ' S/ ' + c.raw.toLocaleString(); } }
-        }
-      },
-      scales: {
-        x: { 
-          grid: { color: gridColor }, 
-          ticks: { color: textColor, callback: function(v) { return v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString(); } } 
-        },
-        y: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } }
-      }
-    }
-  });
+  var pctCert = t.pim > 0 ? (t.cert / t.pim * 100) : 0;
+  var pctDeve = t.pim > 0 ? (t.deve / t.pim * 100) : 0;
+  
+  if ($('kpi-cert')) $('kpi-cert').textContent = pctCert.toFixed(1) + '%';
+  if ($('kpi-deve')) $('kpi-deve').textContent = pctDeve.toFixed(1) + '%';
+  if ($('ring-pct-main')) $('ring-pct-main').textContent = pctDeve.toFixed(0) + '%';
 
-  // --- CHART 2: EFICIENCIA (Semi-Doughnut) ---
-  var pct = t.pim > 0 ? (t.deve / t.pim * 100) : 0;
-  var ctxGauge = $('chart-gauge').getContext('2d');
-  if (_charts.gauge) _charts.gauge.destroy();
+  // --- SVG RINGS ANIMATION ---
+  // Formula: stroke-dashoffset = circumference - (percent / 100 * circumference)
+  
+  // Ring Certificado (r=35, Circumference ≈ 219.9)
+  var circCert = 219.9;
+  var offCert = circCert - (Math.min(pctCert, 100) / 100 * circCert);
+  var ringCert = $('ring-cert-fill');
+  if (ringCert) ringCert.style.strokeDashoffset = offCert;
 
-  _charts.gauge = new Chart(ctxGauge, {
-    type: 'doughnut',
-    data: {
-      labels: ['Ejecutado', 'Restante'],
-      datasets: [{
-        data: [pct, Math.max(0, 100 - pct)],
-        backgroundColor: [
-          pct >= 80 ? '#34C759' : pct >= 50 ? '#FF9500' : '#FF3B30',
-          isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-        ],
-        borderWidth: 0,
-        circumference: 180,
-        rotation: 270,
-        cutout: '85%',
-        borderRadius: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false }
-      }
-    },
-    plugins: [{
-      id: 'textCenter',
-      afterDraw: function(chart) {
-        var ctx = chart.ctx;
-        ctx.save();
-        ctx.font = '700 32px Inter';
-        ctx.fillStyle = isDark ? '#ffffff' : '#000000';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(pct.toFixed(1) + '%', chart.width / 2, chart.height - 20);
-        ctx.font = '500 12px Inter';
-        ctx.fillStyle = textColor;
-        ctx.fillText('DEVE / PIM', chart.width / 2, chart.height - 55);
-        ctx.restore();
-      }
-    }]
-  });
+  // Ring Devengado (r=26, Circumference ≈ 163.3)
+  var circDeve = 163.3;
+  var offDeve = circDeve - (Math.min(pctDeve, 100) / 100 * circDeve);
+  var ringDeve = $('ring-deve-fill');
+  if (ringDeve) ringDeve.style.strokeDashoffset = offDeve;
 }
 </script>

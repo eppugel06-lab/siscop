@@ -30,43 +30,85 @@
 
   <div id="dash-content">
     
-    <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">PIA Total</div><div class="kpi-val" id="kpi-pia">—</div></div>
-      <div class="kpi-card hide-on-pia"><div class="kpi-label">PIM Total</div><div class="kpi-val" id="kpi-pim">—</div></div>
+    <!-- Bento Dashboard Layout -->
+    <div class="bento-grid" id="dash-bento">
       
-      <div class="kpi-card hide-on-pia">
-        <div class="kpi-label">Certificación</div><div class="kpi-val" id="kpi-cert">—</div>
-        <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-cert" style="width:0%"></div></div></div>
+      <!-- KPIs Principales -->
+      <div class="bento-item bento-1x1">
+        <div class="kpi-label">PIA TOTAL</div>
+        <div class="kpi-val" id="kpi-pia" style="font-size:1.1rem">S/ 0.00</div>
       </div>
-      <div class="kpi-card hide-on-pia">
-        <div class="kpi-label">Devengado</div><div class="kpi-val" id="kpi-deve">—</div>
-        <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="bar-deve" style="width:0%"></div></div></div>
+      
+      <div class="bento-item bento-1x1 hide-on-pia">
+        <div class="kpi-label">PIM TOTAL</div>
+        <div class="kpi-val" id="kpi-pim" style="font-size:1.1rem">S/ 0.00</div>
       </div>
+
+      <!-- Activity Ring (Concentric SVG) -->
+      <div class="bento-item bento-2x2 hide-on-pia" style="justify-content:center; align-items:center;">
+        <div class="chart-title" style="position:absolute; top:24px; left:24px; margin:0">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+          Ejecución Global
+        </div>
+        
+        <div class="rings-container" style="position:relative; width:180px; height:180px;">
+          <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width:100%; height:100%;">
+            <!-- Ring PIM (Outer - Static Reference) -->
+            <circle cx="50" cy="50" r="44" stroke="var(--ring-pim-bg)" stroke-width="8" fill="none" />
+            
+            <!-- Ring Certificado (Middle) -->
+            <circle cx="50" cy="50" r="35" stroke="var(--ring-cert-bg)" stroke-width="8" fill="none" />
+            <circle id="ring-cert-fill" cx="50" cy="50" r="35" stroke="var(--ring-cert)" stroke-width="8" fill="none" stroke-dasharray="219.9" stroke-dashoffset="219.9" stroke-linecap="round" style="transition: stroke-dashoffset 1.5s var(--spring)" />
+            
+            <!-- Ring Devengado (Inner) -->
+            <circle cx="50" cy="50" r="26" stroke="var(--ring-deve-bg)" stroke-width="8" fill="none" />
+            <circle id="ring-deve-fill" cx="50" cy="50" r="26" stroke="var(--ring-deve)" stroke-width="8" fill="none" stroke-dasharray="163.3" stroke-dashoffset="163.3" stroke-linecap="round" style="transition: stroke-dashoffset 1.5s var(--spring)" />
+          </svg>
+          
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center;">
+            <div id="ring-pct-main" style="font-size:1.4rem; font-weight:800; color:var(--text1)">0%</div>
+            <div style="font-size:0.55rem; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em">Devengado</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:16px; margin-top:20px; font-size:0.65rem; font-weight:600;">
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ring-cert)"></span> Certificado</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ring-deve)"></span> Devengado</div>
+        </div>
+      </div>
+
+      <!-- KPIs Secundarios -->
+      <div class="bento-item bento-1x1 hide-on-pia">
+        <div class="kpi-label">CERTIFICACIÓN</div>
+        <div class="kpi-val" id="kpi-cert" style="color:var(--ring-cert)">0.0%</div>
+      </div>
+      
+      <div class="bento-item bento-1x1 hide-on-pia">
+        <div class="kpi-label">DEVENGADO</div>
+        <div class="kpi-val" id="kpi-deve" style="color:var(--ring-deve)">0.0%</div>
+      </div>
+
+      <!-- Filtros Interactivos (Bento 4x1) -->
+      <div class="bento-item bento-4x1" style="flex-direction:row; justify-content:space-between; align-items:center; padding:16px 24px">
+        <div style="display:flex; align-items:center; gap:12px">
+          <span class="card-title" style="font-size: 0.9rem; font-weight:700; margin:0">Filtros de Estado</span>
+          <div class="filter-bar" style="margin:0; background:transparent; border:none; padding:0">
+            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok"><span id="res-ok-count">0</span> Ok</button>
+            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs"><span id="res-obs-count">0</span> Obs</button>
+            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add"><span id="res-add-count">0</span> Add</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del"><span id="res-del-count">0</span> Del</button>
+          </div>
+        </div>
+        <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 12px; border-radius:16px">
+          Limpiar Selección
+        </button>
+      </div>
+
     </div>
 
-    <!-- Charts Section -->
-    <div class="chart-grid">
-      <div class="chart-box">
-        <div class="chart-title">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg>
-          Comparativa Presupuestal
-        </div>
-        <div style="flex:1; position:relative;">
-          <canvas id="chart-main"></canvas>
-        </div>
-      </div>
-      <div class="chart-box">
-        <div class="chart-title">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-          Eficiencia de Ejecución
-        </div>
-        <div style="flex:1; position:relative; display:flex; align-items:center; justify-content:center;">
-          <canvas id="chart-gauge" style="max-height:240px"></canvas>
-        </div>
-      </div>
-    </div>
+    <!-- Tabla de Metas (Contenedor Bento Estilo Apple) -->
+    <div class="card" style="margin-top:24px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
 
-    <div class="card" style="margin-top:24px;">
       <div class="card-header" style="flex-direction:column; align-items:stretch; gap:16px;">
         
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
