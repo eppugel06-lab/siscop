@@ -5727,8 +5727,8 @@ function renderDashMetaTable(){
       '<td class="den-cell" title="'+denSafe+'" style="font-weight:500">'+denSafe+'</td>'+
       '<td class="num" style="text-align:right">'+fmtS(m.pia)+'</td>'+
       '<td class="num" style="text-align:right; font-weight:700">'+fmtS(m.pim)+'</td>'+
-      '<td class="num"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctCert+'%</div></div></td>'+
-      '<td class="num"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctDeve+'%</div></div></td>'+
+      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctCert+'%</div></div></td>'+
+      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctDeve+'%</div></div></td>'+
       '<td style="text-align:right">'+badges+'</td>'+
     '</tr>';
   }).join('');
@@ -6227,7 +6227,7 @@ function renderClasifDetail(c){
   html += '</tbody></table></div></div>';
 
   // 6. TABLA DE EJECUCIÓN REAL (SOLO LECTURA)
-  if(!isPIA) {
+  if(!document.body.classList.contains('is-pia')) {
     html += mkMonthlyTable('Ejecución Real', [
       { label: 'Cert. Ejecutado', data: c.ejeCertM, total: c.ejeCertTotal, isInt: false, color: 'var(--ok)' },
       { label: 'Deve. Ejecutado', data: c.ejeDeveM, total: c.ejeDeveTotal, isInt: false, color: 'var(--accent)' },
