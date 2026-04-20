@@ -3602,8 +3602,8 @@
   }
   /* Programación PIM Global Visibility */
   body.is-pia .show-on-pia { display: table-cell !important; }
-  .hide-on-pia { display: flex !important; } 
-  .num.hide-on-pia { display: table-cell !important; }
+  body.is-pia .hide-on-pia { display: none !important; } 
+  body.is-pia .num.hide-on-pia { display: none !important; }
   /* CSS Tooltips Native Style */
   [data-tooltip] { position: relative; }
   [data-tooltip]::before {
@@ -4123,8 +4123,8 @@
                 <th>Denominación</th>
                 <th class="num sortable" data-col="pia" onclick="sortDashMeta('pia')">PIA <span class="sort-icon"></span></th>
                 <th class="num sortable" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
-                <th class="num sortable" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
-                <th class="num sortable" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
+                <th class="num sortable hide-on-pia" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
+                <th class="num sortable hide-on-pia" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
                 <th style="min-width:120px;">Estados (Insumos)</th>
               </tr>
             </thead>
@@ -4191,7 +4191,7 @@
       <div class="card-header"><span class="card-title">Clasificadores de la meta</span><span id="meta-count" style="font-size:.7rem;color:var(--text3);font-family:var(--mono)"></span></div>
       <div class="card-body" style="padding:0">
         <div class="table-wrap">
-          <table><thead><tr><th>#</th><th>Clasificador</th><th>Recurso</th><th class="num hide-on-pia">PIM</th><th class="num hide-on-pia">Ejec Cert</th><th class="num hide-on-pia">Ejec Deve</th><th class="num show-on-pia" style="display:none">PIA</th><th>Estado</th></tr></thead>
+          <table><thead><tr><th>#</th><th>Clasificador</th><th>Recurso</th><th class="num">PIM</th><th class="num hide-on-pia">Ejec Cert</th><th class="num hide-on-pia">Ejec Deve</th><th class="num show-on-pia" style="display:none">PIA</th><th>Estado</th></tr></thead>
           <tbody id="clasif-tbody-meta"></tbody></table>
         </div>
       </div>
@@ -5567,12 +5567,15 @@ function renderDashboardData(d) {
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
-  // Dinamismo de Labels (P16)
+  // Dinamismo de Labels (P16) e Interface Mode (P17)
   var perTxt = String(d.periodo || '');
   var isFuturo = perTxt.indexOf('2027') > -1 || perTxt.indexOf('2028') > -1 || perTxt.indexOf('2029') > -1;
   var labelMain = isFuturo ? 'Programación' : 'Ejecución';
   if ($('chart-title-text')) $('chart-title-text').textContent = labelMain;
   if ($('ring-title-text')) $('ring-title-text').textContent = labelMain;
+  
+  // Aplicar modo limpieza 2027+ a nivel global
+  document.body.classList.toggle('is-pia', isFuturo);
 
   // Actualizar los números de los botones interactivos
   if ($('res-ok-count')) $('res-ok-count').textContent = d.estadosCount.ok;
@@ -5837,21 +5840,34 @@ function loadMetaData(sf){
     },100);
     var metaHtml = mkKpi('PIA', fmtS(d.totales.pia || 0)) +
                    mkKpi('PIM', fmtS(d.totales.pim)) +
-                   mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green') +
-                   mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue') +
+                   mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green', 'hide-on-pia') +
+                   mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue', 'hide-on-pia') +
                    mkKpi('Clasificadores', d.clasificadores.length.toString());
     $('meta-kpi-grid').innerHTML = metaHtml;
     renderMetaAlerts(d.clasificadores);
     renderClasifSidebar(d.clasificadores,null);
-    renderMetaTable();
+    if($('clasif-layout-wrap')) $('clasif-layout-wrap').style.display = 'block';
+    if($('clasif-no-meta')) $('clasif-no-meta').style.display = 'none';
+
+    renderMetaTable(); 
     $('meta-content').style.display='block';
     $('clasif-layout-wrap').style.display='block';
   },function(err){toast('Error: '+err.message,'err');$('meta-skeleton').style.display='none';});
 }
 
-function mkKpi(label,val,sub,barClass){
-  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-val">'+val+'</div>'+
-    (sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div>';
+function mkKpi(label,val,sub,barClass,extraClass){
+  var xCl = extraClass || '';
+  var html='<div class="kpi-card '+xCl+'">'+
+    '<div class="kpi-label">'+label+'</div>'+
+    '<div class="kpi-val">'+val+'</div>';
+  if(sub){
+    html+='<div class="prog-row" style="margin-top:12px">'+
+      '<div class="prog-track"><div class="prog-fill '+(barClass||'')+'" style="width:'+sub+'"></div></div>'+
+      '<div class="prog-pct">'+sub+'</div>'+
+    '</div>';
+  }
+  html+='</div>';
+  return html;
 }
 
 /* ═══ ALERTAS OBSERVACIÓN — DISEÑO COMPACTO Y HORIZONTAL ═══ */
@@ -6104,6 +6120,10 @@ function selectClasif(code){
   $('clasif-detail-empty').style.display='none';
   $('clasif-detail').style.display='none';
   $('clasif-skeleton').style.display='block';
+  
+  // Asegurar que el layout wrap sea visible (P17)
+  if($('clasif-layout-wrap')) $('clasif-layout-wrap').style.display = 'block';
+  if($('clasif-no-meta')) $('clasif-no-meta').style.display = 'none';
 
   renderClasifSidebar(S.metaData.clasificadores, code);
 
@@ -6166,8 +6186,8 @@ function renderClasifDetail(c){
     mkKpi('Pia', fmtS(c.pia || 0)) +
     mkKpi('Pim', fmtS(c.pim || 0)) +
     mkKpi('Meta física', (c.totalFisico || 0) + ' Meses') +
-    mkKpi('Certificado', fmtS(c.ejeCertTotal || 0)) + 
-    mkKpi('Devengado', fmtS(c.ejeDeveTotal || 0)) +
+    mkKpi('Certificado', fmtS(c.ejeCertTotal || 0), null, null, 'hide-on-pia') + 
+    mkKpi('Devengado', fmtS(c.ejeDeveTotal || 0), null, null, 'hide-on-pia') +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
