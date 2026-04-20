@@ -5,7 +5,12 @@ function _getEnc(hoja,filaNum){var ult=hoja.getLastColumn();if(ult===0) return [
 function _idx(enc,nombre){var i=enc.indexOf(nombre.trim().toUpperCase());if(i===-1) throw new Error('Columna "'+nombre+'" no encontrada.');return i;}
 function _getObsIdx(enc){var i1=enc.indexOf('OBSERVACION'),i2=enc.indexOf('OBSERVACI\u00d3N');return i1!==-1?i1:i2;}
 function _n(v){return Number(v)||0;}
-function _normSF(val){var n=parseInt(Number(val),10);return isNaN(n)?'0000':String(n).padStart(4,'0');}
+function _normSF(val){
+  var n=parseInt(Number(val),10);
+  var sf = isNaN(n)?'0000':String(n).padStart(4,'0');
+  var aliased = ['0070','0071','0072','0073','0074','0075','0076'];
+  return (aliased.indexOf(sf) > -1) ? '0048' : sf;
+}
 
 function _leerResumenEstados(ss) {
   try {

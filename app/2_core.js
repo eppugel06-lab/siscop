@@ -82,7 +82,7 @@ function _CORE_IMPORTAR_DEVENGADO(ss) {
   
   for (var r = CONFIG.filasEnc.consolidado; r < datosD.length; r++) {
     var fD = datosD[r];
-    var sfD = String(fD[c.sf]).trim(), clD = String(fD[c.cl]).replace(/\s+/g, '');
+    var sfD = _normSF(fD[c.sf]), clD = String(fD[c.cl]).replace(/\s+/g, '');
     var clave = sfD + '|' + clD;
     
     if (sfD && clD) clavesExist[clave] = true;
@@ -161,7 +161,7 @@ function _CORE_LLENAR_PIA_PIM(ss, mesCorte) {
   for(var i=CONFIG.filasEnc.devengado;i<datosD.length;i++){
     var f=datosD[i];
     if(String(f[d.ue]).trim()!==CONFIG.filtroUE) continue;
-    var sf=String(parseInt(Number(f[d.sf]),10)||0).padStart(4,'0');
+    var sf=_normSF(f[d.sf]);
     var cl=String(f[d.cl]).replace(/\s+/g,'');
     var key=sf+'|'+cl;
     if(!map[key]) map[key]={pia:0,pim:0,ms:new Array(12).fill(0)};
@@ -171,7 +171,7 @@ function _CORE_LLENAR_PIA_PIM(ss, mesCorte) {
   var rPia=[],rPim=[],rDeve=[],rEst=[],rObs=[];
   for(var r=CONFIG.filasEnc.consolidado;r<datosC.length;r++){
     var fC=datosC[r];
-    var sfC=String(parseInt(Number(fC[c.sf]),10)||0).padStart(4,'0');
+    var sfC=_normSF(fC[c.sf]);
     var clC=String(fC[c.cl]).replace(/\s+/g,'');
     var est=String(fC[c.est]||'').trim(), obs=c.obs>=0?String(fC[c.obs]||'').trim():'';
     if(sfC==='0000'||!clC||clC==='UNDEFINED'){
@@ -254,7 +254,7 @@ function _CORE_LLENAR_EJE_CERT(ss, mesCorte) {
   var map={};
   for(var i=CONFIG.filasEnc.certificado;i<dCe.length;i++){
     var f=dCe[i];
-    var sf=String(f[ce.sf]).trim().padStart(4,'0');
+    var sf=_normSF(f[ce.sf]);
     var cl=String(f[ce.cl]).replace(/\s+/g,'');
     var key=sf+'|'+cl;
     if(!map[key]) map[key]=new Array(12).fill(0);
@@ -263,7 +263,7 @@ function _CORE_LLENAR_EJE_CERT(ss, mesCorte) {
   var res=[];
   for(var r=CONFIG.filasEnc.consolidado;r<dC.length;r++){
     var fC=dC[r];
-    var sfC=String(fC[c.sf]).trim().padStart(4,'0');
+    var sfC=_normSF(fC[c.sf]);
     var clC=String(fC[c.cl]).replace(/\s+/g,'');
     if(!sfC||sfC==='0000'||!clC||clC==='UNDEFINED'){res.push(new Array(13).fill(0));continue;}
     var match=map[sfC+'|'+clC]||new Array(12).fill(0);
