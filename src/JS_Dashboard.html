@@ -167,10 +167,10 @@ function renderDashMetaTable(){
     if (!m.counts) return fmtBadge(m.estado);
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: fmtBadge('Eliminar') });
-    if (m.counts.obs > 0) arr.push({ id: 'obs', html: fmtBadge('Observado') });
-    if (m.counts.add > 0) arr.push({ id: 'add', html: fmtBadge('Agregar') });
-    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: fmtBadge('Ok') });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: fmtBadge('Eliminar', m.counts.del) });
+    if (m.counts.obs > 0) arr.push({ id: 'obs', html: fmtBadge('Observado', m.counts.obs) });
+    if (m.counts.add > 0) arr.push({ id: 'add', html: fmtBadge('Agregar', m.counts.add) });
+    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: fmtBadge('Ok', m.counts.ok) });
 
     // Si hay un filtro activo, empujamos ese ID al inicio de la lista
     if (dashFiltroEstado !== 'ALL') {

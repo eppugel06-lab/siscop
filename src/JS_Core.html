@@ -79,13 +79,17 @@ function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') r
 function setTitle(sub){document.title='SG';}
 var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};
 
-function fmtBadge(e){
+function fmtBadge(e, count){
   if(!e) return '';
   var l=e.toLowerCase(), txt=e;
   if(l==='ok') txt='Ok';
   else if(l.indexOf('observ')>-1) txt='Observado';
   else if(l.indexOf('agr')>-1) txt='Agregar';
   else if(l.indexOf('elim')>-1) txt='Eliminar';
+  
+  // Añadir conteo si es mayor a 0 (P19)
+  if(count > 0) txt = '<span style="font-weight:800; margin-right:4px; opacity:0.8">' + count + '</span>' + txt;
+  
   return '<span class="s-badge '+badgeClass(e)+'">'+txt+'</span>';
 }
 
