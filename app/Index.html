@@ -105,8 +105,8 @@
     --surface2: #1C1C1E;
     --sidebar-bg: rgba(18, 18, 18, 0.94);
     --sidebar-txt: #EBEBF5;
-    --border: rgba(255, 255, 255, 0.12);
-    --border2: rgba(255, 255, 255, 0.2);
+    --border: rgba(255, 255, 255, 0.15);
+    --border2: rgba(255, 255, 255, 0.25);
     --text: #FFFFFF;
     --text2: #AEAEB2;
     --text3: #8E8E93;
@@ -599,7 +599,7 @@
     background: var(--surface);
     backdrop-filter: var(--blur);
     -webkit-backdrop-filter: var(--blur);
-    border: none;
+    border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: 24px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.06);
@@ -619,6 +619,7 @@
     background: var(--surface);
     backdrop-filter: var(--blur);
     -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: 24px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.04);
@@ -792,13 +793,13 @@
   .kpi-grid {
     display: grid;
     gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   @media(min-width: 1200px) {
     .kpi-grid {
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(5, 1fr) !important;
     }
   }
 
@@ -4738,6 +4739,16 @@ function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') r
 function setTitle(sub){document.title='SG';}
 var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};
 
+function fmtBadge(e){
+  if(!e) return '';
+  var l=e.toLowerCase(), txt=e;
+  if(l==='ok') txt='Ok';
+  else if(l.indexOf('observ')>-1) txt='Observado';
+  else if(l.indexOf('agr')>-1) txt='Agregar';
+  else if(l.indexOf('elim')>-1) txt='Eliminar';
+  return '<span class="s-badge '+badgeClass(e)+'">'+txt+'</span>';
+}
+
 /* ── TEMA OSCURO/CLARO ── */
 function toggleTheme(){
   var html=document.documentElement;
@@ -5665,13 +5676,13 @@ function renderDashMetaTable(){
 
   // --- FUNCIÓN GENERADORA DE BADGES REORDENABLES ---
   function getOrdenadosBadges(m) {
-    if (!m.counts) return '<span class="badge '+badgeClass(m.estado)+'">'+m.estado+'</span>';
+    if (!m.counts) return fmtBadge(m.estado);
     
     var arr = [];
-    if (m.counts.del > 0) arr.push({ id: 'del', html: '<span class="s-badge del">'+m.counts.del+' Eliminar</span>' });
-    if (m.counts.obs > 0) arr.push({ id: 'obs', html: '<span class="s-badge obs">'+m.counts.obs+' Observado</span>' });
-    if (m.counts.add > 0) arr.push({ id: 'add', html: '<span class="s-badge add">'+m.counts.add+' Agregar</span>' });
-    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: '<span class="s-badge ok">'+m.counts.ok+' Ok</span>' });
+    if (m.counts.del > 0) arr.push({ id: 'del', html: fmtBadge('Eliminar') });
+    if (m.counts.obs > 0) arr.push({ id: 'obs', html: fmtBadge('Observado') });
+    if (m.counts.add > 0) arr.push({ id: 'add', html: fmtBadge('Agregar') });
+    if (m.counts.ok > 0)  arr.push({ id: 'ok',  html: fmtBadge('Ok') });
 
     // Si hay un filtro activo, empujamos ese ID al inicio de la lista
     if (dashFiltroEstado !== 'ALL') {
@@ -6012,7 +6023,7 @@ function renderMetaTable(){
       '<td class="num hide-on-pia">'+fmtS(c.ejeCertTotal)+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(c.ejeDeveTotal)+'</td>'+
       '<td class="num show-on-pia" style="display:none">'+fmtS(c.pia)+'</td>'+
-      '<td><span class="badge '+badgeClass(c.estado)+'">'+c.estado+'</span></td>'+
+      '<td>'+fmtBadge(c.estado)+'</td>'+
     '</tr>';
   }).join('');
 
@@ -6020,7 +6031,7 @@ function renderMetaTable(){
     var pC=c.pim>0?(c.ejeCertTotal/c.pim*100):0;
     var pD=c.pim>0?(c.ejeDeveTotal/c.pim*100):0;
     return '<div class="meta-card-mobile" onclick="selectClasif(\''+c.clasificador+'\')">'+
-      '<div class="mc-header"><span class="mc-code">'+(start+i+1)+'. '+c.clasificador+'</span><span class="badge '+badgeClass(c.estado)+'">'+c.estado+'</span></div>'+
+      '<div class="mc-header"><span class="mc-code">'+(start+i+1)+'. '+c.clasificador+'</span>'+fmtBadge(c.estado)+'</div>'+
       '<div class="mc-den">'+c.recurso+'</div>'+
       '<div class="mc-bars">'+
         '<div class="mc-row"><span class="mc-label">Cert.</span><div class="mc-track"><div class="mc-fill" style="width:'+Math.min(pC,100)+'%;background:var(--ok)"></div></div><span class="mc-pct" style="color:var(--ok)">'+pC.toFixed(1)+'%</span></div>'+

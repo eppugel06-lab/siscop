@@ -79,6 +79,16 @@ function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') r
 function setTitle(sub){document.title='SG';}
 var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};
 
+function fmtBadge(e){
+  if(!e) return '';
+  var l=e.toLowerCase(), txt=e;
+  if(l==='ok') txt='Ok';
+  else if(l.indexOf('observ')>-1) txt='Observado';
+  else if(l.indexOf('agr')>-1) txt='Agregar';
+  else if(l.indexOf('elim')>-1) txt='Eliminar';
+  return '<span class="s-badge '+badgeClass(e)+'">'+txt+'</span>';
+}
+
 /* ── TEMA OSCURO/CLARO ── */
 function toggleTheme(){
   var html=document.documentElement;
