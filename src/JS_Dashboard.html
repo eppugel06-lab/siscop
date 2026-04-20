@@ -535,7 +535,7 @@ function renderClasifSidebar(list,activeCode){
     return '<div class="clasif-item'+(cl.clasificador===activeCode?' active':'')+'" onclick="selectClasif(\''+cl.clasificador+'\')" data-code="'+cl.clasificador+'">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">'+
         '<span class="ci-code">'+cl.clasificador+'</span>'+
-        '<span class="badge '+badgeClass(cl.estado)+'" style="font-size:.56rem">'+cl.estado+'</span>'+
+        fmtBadge(cl.estado) +
       '</div>'+
       '<div class="ci-desc">'+cl.recurso+'</div>'+
     '</div>';
@@ -604,11 +604,11 @@ function renderClasifDetail(c){
 
   // 3. CONSTRUCCIÓN DEL BLOQUE DE CABECERA Y ALERTAS
   var html = '';
-  html += '<div class="card" style="margin-bottom:16px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
+  html += '<div class="card" style="margin-bottom:16px; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
     '<div class="card-body" style="padding:24px">' +
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<span style="font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--brand);letter-spacing:-0.02em">' + c.clasificador + '</span>' +
-        '<span class="s-badge ' + badgeClass(c.status || c.estado) + '" style="padding:4px 10px">' + (c.status || (c.estado === 'Add' ? 'Agregar' : (c.estado === 'Obs' ? 'Observado' : (c.estado === 'Del' ? 'Eliminar' : (c.estado === 'Ok' ? 'Ok' : c.estado))))) + '</span>' +
+        fmtBadge(c.status || c.estado) +
       '</div>' +
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       
@@ -643,7 +643,7 @@ function renderClasifDetail(c){
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (Bento Style Card)
-  html += '<div class="card" style="margin-bottom:16px; border:none; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
+  html += '<div class="card" style="margin-bottom:16px; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
     '<div class="card-header" style="padding:16px 24px; border-bottom:1px solid rgba(0,0,0,0.05)">' +
       '<span class="card-title" style="font-size:0.9rem">Programación Financiera</span>' +
       (canFix ? '<button class="btn btn-secondary btn-sm ep-edit-btn" data-code="' + c.clasificador + '" style="border-radius:20px; padding:6px 14px; background:var(--brand-soft); color:var(--brand); border:none">' +
