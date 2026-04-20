@@ -205,8 +205,8 @@ function _CORE_LLENAR_PIA_PIM(ss, mesCorte) {
 function _CORE_LLENAR_SOLO_PIA(ss) {
   var hC = _getHoja(ss, CONFIG.hojas.consolidado), hD = _getHoja(ss, CONFIG.hojas.devengado);
   var encC = _getEnc(hC, CONFIG.filasEnc.consolidado), encD = _getEnc(hD, CONFIG.filasEnc.devengado);
-  var c = { sf: _idx(encC, 'SEC_FUNC'), cl: _idx(encC, 'CLASIFICADOR_CODIGO'), pia: _idx(encC, 'MTO_PIA') };
-  var d = { sf: _idx(encD, 'SEC_FUNC'), cl: _idx(encD, 'CLASIFICADOR'), ue: _idx(encD, 'UNIDAD_EJECUTORA'), pia: _idx(encD, 'MTO_PIA') };
+  var c = { sf: _idx(encC, 'SEC_FUNC'), cl: _idx(encC, 'CLASIFICADOR_CODIGO'), pia: _idx(encC, 'MTO_PIA'), pim: _idx(encC, 'MTO_PIM') };
+  var d = { sf: _idx(encD, 'SEC_FUNC'), cl: _idx(encD, 'CLASIFICADOR'), ue: _idx(encD, 'UNIDAD_EJECUTORA'), pia: _idx(encD, 'MTO_PIA'), pim: _idx(encD, 'MTO_PIM') };
 
   var datosD = hD.getDataRange().getValues();
   var map = {};
@@ -216,24 +216,27 @@ function _CORE_LLENAR_SOLO_PIA(ss) {
     var sf = _normSF(f[d.sf]);
     var cl = String(f[d.cl]).replace(/\s+/g, '');
     var key = sf + '|' + cl;
-    if (!map[key]) map[key] = 0;
-    map[key] += _n(f[d.pia]);
+    if (!map[key]) map[key] = { pia: 0, pim: 0 };
+    map[key].pia += _n(f[d.pia]);
+    map[key].pim += _n(f[d.pim]);
   }
 
   var datosC = hC.getDataRange().getValues();
-  var rPia = [];
+  var rPia = [], rPim = [];
   for (var r = CONFIG.filasEnc.consolidado; r < datosC.length; r++) {
     var fC = datosC[r];
     var sfC = _normSF(fC[c.sf]);
     var clC = String(fC[c.cl]).replace(/\s+/g, '');
     if (sfC === '0000' || !clC || clC === 'UNDEFINED') { rPia.push([0]); continue; }
     var match = map[sfC + '|' + clC];
-    rPia.push([match || 0]);
+    rPia.push([match ? match.pia : 0]);
+    rPim.push([match ? match.pim : 0]);
   }
 
   var fIni = CONFIG.filasEnc.consolidado + 1;
   if (rPia.length > 0) {
     hC.getRange(fIni, c.pia + 1, rPia.length, 1).setValues(rPia);
+    hC.getRange(fIni, c.pim + 1, rPim.length, 1).setValues(rPim);
   }
 }
 
@@ -391,8 +394,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
     var est = idx.est >= 0 ? String(f[idx.est] || '').trim() : '';
     var obs = idx.obs >= 0 ? String(f[idx.obs] || '').trim() : '';
 
-    // ── Resetear campos de ejecución (PIA = año futuro sin ejecución) ──
-    if (idx.pim >= 0) f[idx.pim] = 0;
+    // ── Persistencia PIM (P16: No borrar PIM en modo Programación) ──
+    var pim = _n(f[idx.pim]);
     if (idx.tCe >= 0) f[idx.tCe] = 0;
     if (idx.tDe >= 0) f[idx.tDe] = 0;
     for (var m = 0; m < 12; m++) {
@@ -400,8 +403,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       f[idx.eDeMs[m]] = 0;
     }
 
-    // ── REGLA PIA: Clasificador con PIA=0 → Eliminar ──
-    if (pia === 0) {
+    // ── REGLA PIM: Clasificador con PIM=0 y PIA=0 → Eliminar ──
+    if (pim === 0 && pia === 0) {
       if (idx.est >= 0) f[idx.est] = 'Eliminar';
       if (idx.obs >= 0) {
         var notaPIA0 = 'PIA es 0 en DEVENGADO. Eliminar de SISPLAN.';
@@ -433,34 +436,34 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       }
     }
 
-    // ── Distribución proporcional CERT y DEVE a cantidades físicas (H-02) ──
+    // ── DISTRIBUCIÓN PIM (Fase P16: Certificado 100% Enero, Devengado Proporcional) ──
     var cants  = idx.cants.map(function(i2){ return _n(f[i2]); });
     var totFis = cants.reduce(function(a, b){ return a + b; }, 0);
     var certArray = new Array(12).fill(0);
     var deveArray = new Array(12).fill(0);
 
-    if (totFis > 0 && pia > 0) {
-      var acum = 0, ultActivo = -1;
+    // Regla Certificado: 100% en Enero
+    certArray[0] = pim;
+
+    if (totFis > 0 && pim > 0) {
+      var acumD = 0, ultActivo = -1;
       for (var m3 = 0; m3 < 12; m3++) {
         if (cants[m3] > 0) {
-          var cuota = Math.floor((pia * (cants[m3] / totFis)) * 100) / 100;
-          deveArray[m3] = cuota;
-          certArray[m3] = cuota;
-          acum += cuota;
+          var cuotaD = Math.floor((pim * (cants[m3] / totFis)) * 100) / 100;
+          deveArray[m3] = cuotaD;
+          acumD += cuotaD;
           ultActivo = m3;
         }
       }
-      var delta = Math.round((pia - acum) * 100) / 100;
+      var deltaD = Math.round((pim - acumD) * 100) / 100;
       if (ultActivo >= 0) {
-        deveArray[ultActivo] = Math.round((deveArray[ultActivo] + delta) * 100) / 100;
-        certArray[ultActivo] = Math.round((certArray[ultActivo] + delta) * 100) / 100;
+        deveArray[ultActivo] = Math.round((deveArray[ultActivo] + deltaD) * 100) / 100;
       }
-    } else if (pia > 0) {
-      // Sin meses activos → todo a Enero con observación (H-14)
-      deveArray[0] = pia;
-      certArray[0] = pia;
+    } else if (pim > 0) {
+      // Sin meses activos → Devengado a Enero
+      deveArray[0] = pim;
       if (idx.obs >= 0) {
-        var notaSinMeses = 'Sin meses activos en SISPLAN. PIA asignado a Enero.';
+        var notaSinMeses = 'Sin meses activos en SISPLAN. PIM asignado a Enero.';
         var obsActual = String(f[idx.obs] || '');
         if (obsActual.indexOf(notaSinMeses) === -1) {
           f[idx.obs] = obsActual ? obsActual + ' | ' + notaSinMeses : notaSinMeses;
@@ -472,8 +475,8 @@ function _CORE_CALCULAR_PROG_PIA(ss) {
       f[idx.cMs[m4]] = certArray[m4];
       f[idx.dMs[m4]] = deveArray[m4];
     }
-    f[idx.cTot] = pia;
-    f[idx.dTot] = pia;
+    f[idx.cTot] = pim;
+    f[idx.dTot] = pim;
 
     filtrado.push(f);
   }

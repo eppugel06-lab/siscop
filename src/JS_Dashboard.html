@@ -37,6 +37,13 @@ function renderDashboardData(d) {
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
+  // Dinamismo de Labels (P16)
+  var perTxt = String(d.periodo || '');
+  var isFuturo = perTxt.indexOf('2027') > -1 || perTxt.indexOf('2028') > -1 || perTxt.indexOf('2029') > -1;
+  var labelMain = isFuturo ? 'Programación' : 'Ejecución';
+  if ($('chart-title-text')) $('chart-title-text').textContent = labelMain;
+  if ($('ring-title-text')) $('ring-title-text').textContent = labelMain;
+
   // Actualizar los números de los botones interactivos
   if ($('res-ok-count')) $('res-ok-count').textContent = d.estadosCount.ok;
   if ($('res-obs-count')) $('res-obs-count').textContent = d.estadosCount.observado;
