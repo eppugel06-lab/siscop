@@ -171,12 +171,13 @@ function renderDashMetaTable(){
 
   /* Tabla desktop */
   $('metas-tbody').innerHTML=slice.map(function(m,i){
-    var denEsc=m.den.replace(/"/g,'&quot;');
-    var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+    var denSafe = safeHtml(m.den);
+    var sfSafe = safeHtml(m.sf);
+    var badges = getOrdenadosBadges(m); 
 
-    return '<tr onclick="selectMeta(\''+m.sf+'\')" style="cursor:pointer">'+
-      '<td class="code">'+m.sf+'</td>'+
-      '<td class="den-cell" title="'+denEsc+'">'+m.den+'</td>'+
+    return '<tr onclick="selectMeta(\''+sfSafe+'\')" style="cursor:pointer">'+
+      '<td class="code">'+sfSafe+'</td>'+
+      '<td class="den-cell" title="'+denSafe+'">'+denSafe+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(m.pim)+'</td>'+
       '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
       '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
@@ -192,14 +193,16 @@ function renderDashMetaTable(){
       var cC=pC>=80?'var(--ok)':pC>=50?'var(--obs)':'var(--del)';
       var cD=pD>=80?'var(--ok)':pD>=50?'var(--obs)':'var(--accent)';
       
-      var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+      var denSafe = safeHtml(m.den);
+      var sfSafe = safeHtml(m.sf);
+      var badges = getOrdenadosBadges(m); 
 
-      return '<div class="dash-meta-card" onclick="selectMeta(\''+m.sf+'\')">'+
+      return '<div class="dash-meta-card" onclick="selectMeta(\''+sfSafe+'\')">'+
         '<div class="dmc-header">'+
-          '<span class="dmc-code">'+m.sf+'</span>'+
+          '<span class="dmc-code">'+sfSafe+'</span>'+
           badges+
         '</div>'+
-        '<div class="dmc-den">'+m.den+'</div>'+
+        '<div class="dmc-den">'+denSafe+'</div>'+
         '<div class="dmc-row hide-on-pia"><span class="dmc-label">Certificado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pC+'%;background:'+cC+'"></div></div><span class="dmc-pct" style="color:'+cC+'">'+m.pctCert+'%</span></div>'+
         '<div class="dmc-row hide-on-pia"><span class="dmc-label">Devengado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pD+'%;background:'+cD+'"></div></div><span class="dmc-pct" style="color:'+cD+'">'+m.pctDeve+'%</span></div>'+
         '<div class="dmc-footer"><span class="dmc-pim hide-on-pia">PIM: '+fmtS(m.pim)+'</span></div>'+

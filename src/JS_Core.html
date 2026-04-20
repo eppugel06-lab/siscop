@@ -69,6 +69,12 @@ function fmtS(v){return 'S/ '+fmtD(v);}
 function fmtD(v){return (Number(v)||0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});}
 function fmtN(v){return (Number(v)||0).toFixed(2);}
 function fmtI(v){return Math.round(Number(v)||0).toString();}
+function safeHtml(t){
+  if(!t) return '';
+  var d=document.createElement('div');
+  d.textContent=t;
+  return d.innerHTML;
+}
 function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') return 'ok';if(l.indexOf('observ')>-1) return 'obs';if(l.indexOf('agr')>-1) return 'add';if(l.indexOf('elim')>-1) return 'del';return 'none';}
 function setTitle(sub){document.title='SG';}
 var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};

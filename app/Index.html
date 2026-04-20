@@ -70,6 +70,8 @@
     --radius-xl: 20px;
     --blur: blur(20px);
     --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-soft: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
     /* Shimmer Animation */
     --shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
@@ -182,7 +184,7 @@
     z-index: 50;
     overflow: hidden;
     border-right: 1px solid var(--border);
-    transition: transform var(--transition);
+    transition: transform var(--spring), width var(--spring);
   }
 
   .sb-logo {
@@ -266,7 +268,7 @@
     font-weight: 500;
     color: var(--text2);
     cursor: pointer;
-    transition: all var(--transition);
+    transition: all var(--spring-soft);
     margin-bottom: 1px;
     border: none;
     background: none;
@@ -3445,6 +3447,34 @@
   }
   body.is-pia .hide-on-pia { display: none !important; }
   body.is-pia .show-on-pia { display: table-cell !important; }
+  /* CSS Tooltips Native Style */
+  [data-tooltip] { position: relative; }
+  [data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all var(--spring-soft);
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  [data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
 </style>
 </head>
 
@@ -3467,7 +3497,7 @@
   <nav id="sidebar-nav">
     <div class="nav-section" id="nav-sec-proceso">
       <div class="nav-section-label">Proceso</div>
-      <button id="nav-upload" class="nav-item active" onclick="navTo('upload')">
+      <button id="nav-upload" class="nav-item active" onclick="navTo('upload')" data-tooltip="Subir SIAF/SISPLAN">
         <svg class="ni-icon" viewBox="0 0 24 24" style="stroke-width: 1.5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Cargar Insumos
       </button>
@@ -3489,11 +3519,11 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Gestión</div>
-      <button id="nav-export" class="nav-item" onclick="navTo('export')">
+      <button id="nav-export" class="nav-item" onclick="navTo('export')" data-tooltip="Generar Reportes Excel">
         <svg class="ni-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Exportar
       </button>
-      <button id="nav-historial" class="nav-item" onclick="navTo('historial')">
+      <button id="nav-historial" class="nav-item" onclick="navTo('historial')" data-tooltip="Log de procesos realizados">
         <svg class="ni-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Historial
       </button>
@@ -4405,6 +4435,12 @@ function fmtS(v){return 'S/ '+fmtD(v);}
 function fmtD(v){return (Number(v)||0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});}
 function fmtN(v){return (Number(v)||0).toFixed(2);}
 function fmtI(v){return Math.round(Number(v)||0).toString();}
+function safeHtml(t){
+  if(!t) return '';
+  var d=document.createElement('div');
+  d.textContent=t;
+  return d.innerHTML;
+}
 function badgeClass(e){if(!e) return 'none';var l=e.toLowerCase();if(l==='ok') return 'ok';if(l.indexOf('observ')>-1) return 'obs';if(l.indexOf('agr')>-1) return 'add';if(l.indexOf('elim')>-1) return 'del';return 'none';}
 function setTitle(sub){document.title='SG';}
 var _debounce=function(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};};
@@ -5358,12 +5394,13 @@ function renderDashMetaTable(){
 
   /* Tabla desktop */
   $('metas-tbody').innerHTML=slice.map(function(m,i){
-    var denEsc=m.den.replace(/"/g,'&quot;');
-    var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+    var denSafe = safeHtml(m.den);
+    var sfSafe = safeHtml(m.sf);
+    var badges = getOrdenadosBadges(m); 
 
-    return '<tr onclick="selectMeta(\''+m.sf+'\')" style="cursor:pointer">'+
-      '<td class="code">'+m.sf+'</td>'+
-      '<td class="den-cell" title="'+denEsc+'">'+m.den+'</td>'+
+    return '<tr onclick="selectMeta(\''+sfSafe+'\')" style="cursor:pointer">'+
+      '<td class="code">'+sfSafe+'</td>'+
+      '<td class="den-cell" title="'+denSafe+'">'+denSafe+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(m.pim)+'</td>'+
       '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
       '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
@@ -5379,14 +5416,16 @@ function renderDashMetaTable(){
       var cC=pC>=80?'var(--ok)':pC>=50?'var(--obs)':'var(--del)';
       var cD=pD>=80?'var(--ok)':pD>=50?'var(--obs)':'var(--accent)';
       
-      var badges = getOrdenadosBadges(m); // Llamamos al nuevo generador
+      var denSafe = safeHtml(m.den);
+      var sfSafe = safeHtml(m.sf);
+      var badges = getOrdenadosBadges(m); 
 
-      return '<div class="dash-meta-card" onclick="selectMeta(\''+m.sf+'\')">'+
+      return '<div class="dash-meta-card" onclick="selectMeta(\''+sfSafe+'\')">'+
         '<div class="dmc-header">'+
-          '<span class="dmc-code">'+m.sf+'</span>'+
+          '<span class="dmc-code">'+sfSafe+'</span>'+
           badges+
         '</div>'+
-        '<div class="dmc-den">'+m.den+'</div>'+
+        '<div class="dmc-den">'+denSafe+'</div>'+
         '<div class="dmc-row hide-on-pia"><span class="dmc-label">Certificado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pC+'%;background:'+cC+'"></div></div><span class="dmc-pct" style="color:'+cC+'">'+m.pctCert+'%</span></div>'+
         '<div class="dmc-row hide-on-pia"><span class="dmc-label">Devengado</span><div class="dmc-track"><div class="dmc-fill" style="width:'+pD+'%;background:'+cD+'"></div></div><span class="dmc-pct" style="color:'+cD+'">'+m.pctDeve+'%</span></div>'+
         '<div class="dmc-footer"><span class="dmc-pim hide-on-pia">PIM: '+fmtS(m.pim)+'</span></div>'+
