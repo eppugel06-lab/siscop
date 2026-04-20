@@ -1604,8 +1604,8 @@
     white-space: normal;
     word-break: break-word;
     line-height: 1.4;
-    min-width: 180px;
-    max-width: 320px;
+    min-width: 140px;
+    max-width: 280px;
     font-size: .76rem;
     color: var(--text);
     cursor: pointer;
@@ -3600,8 +3600,10 @@
     color: #FCA5A5;
     border: 1px solid rgba(239, 68, 68, 0.3);
   }
-  body.is-pia .hide-on-pia { display: none !important; }
+  /* Programación PIM Global Visibility */
   body.is-pia .show-on-pia { display: table-cell !important; }
+  .hide-on-pia { display: flex !important; } 
+  .num.hide-on-pia { display: table-cell !important; }
   /* CSS Tooltips Native Style */
   [data-tooltip] { position: relative; }
   [data-tooltip]::before {
@@ -4019,7 +4021,7 @@
       <div class="bento-item bento-2x2 hide-on-pia" style="justify-content:center; align-items:center;">
         <div class="chart-title" style="position:absolute; top:24px; left:24px; margin:0">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-          Ejecución Global
+          Programación Global
         </div>
         
         <div style="position:relative; width:160px; height:160px; margin:0 auto">
@@ -4038,7 +4040,7 @@
           </svg>
           <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center">
             <span id="ring-pct-main" style="font-size:1.8rem; font-weight:800; color:var(--text); letter-spacing:-0.05em; line-height:1">0%</span>
-            <span style="font-size:0.55rem; font-weight:800; color:var(--text3); letter-spacing:0.02em; margin-top:4px">Ejecución</span>
+            <span style="font-size:0.55rem; font-weight:800; color:var(--text3); letter-spacing:0.02em; margin-top:4px">Programación</span>
           </div>
         </div>
         
@@ -4119,9 +4121,10 @@
               <tr>
                 <th class="sortable" data-col="sf" onclick="sortDashMeta('sf')">SEC_FUNC <span class="sort-icon"></span></th>
                 <th>Denominación</th>
-                <th class="num sortable hide-on-pia" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
-                <th class="num sortable hide-on-pia" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
-                <th class="num sortable hide-on-pia" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="pia" onclick="sortDashMeta('pia')">PIA <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="pim" onclick="sortDashMeta('pim')">PIM <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="cert" onclick="sortDashMeta('cert')">% Cert <span class="sort-icon"></span></th>
+                <th class="num sortable" data-col="deve" onclick="sortDashMeta('deve')">% Deve <span class="sort-icon"></span></th>
                 <th style="min-width:120px;">Estados (Insumos)</th>
               </tr>
             </thead>
@@ -4197,7 +4200,7 @@
     <div class="pagination" id="meta-pagination"></div>
   </div>
 </div>           <div class="page" id="page-clasif">
-  <div class="page-header"><h1>Detalle de Clasificador</h1><p>Programación y ejecución mensual por clasificador</p></div>
+  <div class="page-header"><h1>Detalle de Clasificador</h1><p>Programación mensual por clasificador</p></div>
   <div id="clasif-no-meta" class="alert alert-info">
     <svg class="alert-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     Selecciona una meta primero para ver sus clasificadores.
@@ -5542,19 +5545,15 @@ function loadDashboard(){
 }
 
 function renderDashboardData(d) {
-  var isPIA = d.pim === 0 && d.pia > 0;
-  if(isPIA) document.body.classList.add('is-pia');
-  else document.body.classList.remove('is-pia');
-
-  if(isPIA && document.getElementById('kpi-pia-title')) document.getElementById('kpi-pia-title').textContent = "PIA Proyectado";
+  // Siempre mostrar PIM como base ahora que el proceso es Programación PIM
+  document.body.classList.remove('is-pia');
 
   $('dash-skeleton').style.display='none';
   $('dash-content').style.display='block';
   $('kpi-pia').textContent=fmtS(d.pia);
-  if(!isPIA) {
-    $('kpi-pim').textContent=fmtS(d.pim);
-    var amtCert = d.ejeCertTotal || d.ejeCert || (d.pctCert / 100 * d.pim);
-    var amtDeve = d.ejeDeveTotal || d.ejeDeve || (d.pctDeve / 100 * d.pim);
+  $('kpi-pim').textContent=fmtS(d.pim);
+  var amtCert = d.ejeCertTotal || d.ejeCert || (d.pctCert / 100 * d.pim);
+  var amtDeve = d.ejeDeveTotal || d.ejeDeve || (d.pctDeve / 100 * d.pim);
     $('kpi-cert').innerHTML=fmtS(amtCert) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctCert.toFixed(1) + '%</div>';
     $('kpi-deve').innerHTML=fmtS(amtDeve) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctDeve.toFixed(1) + '%</div>';
     setTimeout(function(){
@@ -5707,9 +5706,10 @@ function renderDashMetaTable(){
     return '<tr onclick="selectMeta(\''+sfSafe+'\')" style="cursor:pointer">'+
       '<td class="code" style="font-weight:700; color:var(--brand)">'+sfSafe+'</td>'+
       '<td class="den-cell" title="'+denSafe+'" style="font-weight:500">'+denSafe+'</td>'+
-      '<td class="num hide-on-pia" style="text-align:right; font-weight:700">'+fmtS(m.pim)+'</td>'+
-      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctCert+'%</div></div></td>'+
-      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctDeve+'%</div></div></td>'+
+      '<td class="num" style="text-align:right">'+fmtS(m.pia)+'</td>'+
+      '<td class="num" style="text-align:right; font-weight:700">'+fmtS(m.pim)+'</td>'+
+      '<td class="num"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctCert+'%</div></div></td>'+
+      '<td class="num"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctDeve+'%</div></div></td>'+
       '<td style="text-align:right">'+badges+'</td>'+
     '</tr>';
   }).join('');
@@ -5828,15 +5828,11 @@ function loadMetaData(sf){
       $('meta-pct-cert').textContent=pC.toFixed(1)+'%';
       $('meta-pct-deve').textContent=pD.toFixed(1)+'%';
     },100);
-    var metaHtml = mkKpi('PIA', fmtS(d.totales.pia || 0));
-    if (document.body.classList.contains('is-pia')) {
-      metaHtml += mkKpi('Clasificadores', d.clasificadores.length.toString());
-    } else {
-      metaHtml += mkKpi('PIM', fmtS(d.totales.pim)) +
-                  mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green') +
-                  mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue') +
-                  mkKpi('Clasificadores', d.clasificadores.length.toString());
-    }
+    var metaHtml = mkKpi('PIA', fmtS(d.totales.pia || 0)) +
+                   mkKpi('PIM', fmtS(d.totales.pim)) +
+                   mkKpi('Certificado', fmtS(d.totales.ejeCert), pC.toFixed(1)+'%', 'fill-green') +
+                   mkKpi('Devengado', fmtS(d.totales.ejeDeve), pD.toFixed(1)+'%', 'fill-blue') +
+                   mkKpi('Clasificadores', d.clasificadores.length.toString());
     $('meta-kpi-grid').innerHTML = metaHtml;
     renderMetaAlerts(d.clasificadores);
     renderClasifSidebar(d.clasificadores,null);
@@ -6159,13 +6155,12 @@ function renderClasifDetail(c){
     '</div></div>';
 
   // 4. BLOQUE DE KPIs
-  var isPIA = document.body.classList.contains('is-pia');
-  // 4. BLOQUE DE KPIs
-  var isPIA = document.body.classList.contains('is-pia');
   html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +
     mkKpi('Pia', fmtS(c.pia || 0)) +
-    mkKpi(isPIA?'Pia total':'Pim', fmtS(isPIA?c.pia:c.pim)) + mkKpi('Meta física', c.totalFisico + ' Meses') +
-    (isPIA?'':mkKpi('Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Devengado', fmtS(c.ejeDeveTotal))) +
+    mkKpi('Pim', fmtS(c.pim || 0)) +
+    mkKpi('Meta física', (c.totalFisico || 0) + ' Meses') +
+    mkKpi('Certificado', fmtS(c.ejeCertTotal || 0)) + 
+    mkKpi('Devengado', fmtS(c.ejeDeveTotal || 0)) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)

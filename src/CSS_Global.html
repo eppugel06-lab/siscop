@@ -1565,8 +1565,8 @@
     white-space: normal;
     word-break: break-word;
     line-height: 1.4;
-    min-width: 180px;
-    max-width: 320px;
+    min-width: 140px;
+    max-width: 280px;
     font-size: .76rem;
     color: var(--text);
     cursor: pointer;
@@ -3561,8 +3561,10 @@
     color: #FCA5A5;
     border: 1px solid rgba(239, 68, 68, 0.3);
   }
-  body.is-pia .hide-on-pia { display: none !important; }
+  /* Programación PIM Global Visibility */
   body.is-pia .show-on-pia { display: table-cell !important; }
+  .hide-on-pia { display: flex !important; } 
+  .num.hide-on-pia { display: table-cell !important; }
   /* CSS Tooltips Native Style */
   [data-tooltip] { position: relative; }
   [data-tooltip]::before {
