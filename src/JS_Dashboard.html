@@ -33,7 +33,7 @@ function renderDashboardData(d) {
       $('bar-deve').style.width=pD+'%';
       $('bar-deve').className='kpi-bar-fill '+(pD>=80?'fill-green':pD>=50?'fill-amber':'fill-blue');
     },100);
-  }
+
   $('dash-periodo-txt').textContent='Corte: '+d.periodo+' · '+d.procesadoEl;
   $('sb-periodo').textContent=d.periodo;
 
