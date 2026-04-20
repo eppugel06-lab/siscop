@@ -26,8 +26,10 @@ function renderDashboardData(d) {
   $('kpi-pia').textContent=fmtS(d.pia);
   if(!isPIA) {
     $('kpi-pim').textContent=fmtS(d.pim);
-    $('kpi-cert').innerHTML=fmtS(d.ejeCertTotal || d.ejeCert || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctCert.toFixed(1) + '%</div>';
-    $('kpi-deve').innerHTML=fmtS(d.ejeDeveTotal || d.ejeDeve || 0) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctDeve.toFixed(1) + '%</div>';
+    var amtCert = d.ejeCertTotal || d.ejeCert || (d.pctCert / 100 * d.pim);
+    var amtDeve = d.ejeDeveTotal || d.ejeDeve || (d.pctDeve / 100 * d.pim);
+    $('kpi-cert').innerHTML=fmtS(amtCert) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctCert.toFixed(1) + '%</div>';
+    $('kpi-deve').innerHTML=fmtS(amtDeve) + '<div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:2px">' + d.pctDeve.toFixed(1) + '%</div>';
     setTimeout(function(){
       var pC=Math.min(d.pctCert,100), pD=Math.min(d.pctDeve,100);
       $('bar-cert').style.width=pC+'%';
@@ -611,8 +613,8 @@ function renderClasifDetail(c){
       '<div style="margin-top:6px;font-size:0.9rem;color:var(--text);font-weight:600;line-height:1.4">' + c.recurso + '</div>' +
       
       '<div class="clasif-progress-block hide-on-pia" style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.05)">' +
-        '<div class="prog-row"><span class="prog-label">CERTIFICADO</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%; background:var(--ring-cert)"></div></div><span class="prog-pct" style="color:var(--ring-cert)">' + pC.toFixed(1) + '%</span></div>' +
-        '<div class="prog-row" style="margin-bottom:0"><span class="prog-label">DEVENGADO</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%; background:var(--ring-deve)"></div></div><span class="prog-pct" style="color:var(--ring-deve)">' + pD.toFixed(1) + '%</span></div>' +
+        '<div class="prog-row"><span class="prog-label">Certificado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pC, 100) + '%; background:var(--ring-cert)"></div></div><span class="prog-pct" style="color:var(--ring-cert)">' + pC.toFixed(1) + '%</span></div>' +
+        '<div class="prog-row" style="margin-bottom:0"><span class="prog-label">Devengado</span><div class="prog-track"><div class="prog-fill" style="width:' + Math.min(pD, 100) + '%; background:var(--ring-deve)"></div></div><span class="prog-pct" style="color:var(--ring-deve)">' + pD.toFixed(1) + '%</span></div>' +
       '</div>' +
       
       (!esOk && c.observacion ?
@@ -634,9 +636,9 @@ function renderClasifDetail(c){
   // 4. BLOQUE DE KPIs
   var isPIA = document.body.classList.contains('is-pia');
   html += '<div class="kpi-grid" style="margin-bottom:16px; gap:16px">' +
-    mkKpi('PIA', fmtS(c.pia || 0)) +
-    mkKpi(isPIA?'PIA TOTAL':'PIM', fmtS(isPIA?c.pia:c.pim)) + mkKpi('META FÍSICA', c.totalFisico + ' Meses') +
-    (isPIA?'':mkKpi('CERTIFICADO', fmtS(c.ejeCertTotal)) + mkKpi('DEVENGADO', fmtS(c.ejeDeveTotal))) +
+    mkKpi('Pia', fmtS(c.pia || 0)) +
+    mkKpi(isPIA?'Pia total':'Pim', fmtS(isPIA?c.pia:c.pim)) + mkKpi('Meta física', c.totalFisico + ' Meses') +
+    (isPIA?'':mkKpi('Certificado', fmtS(c.ejeCertTotal)) + mkKpi('Devengado', fmtS(c.ejeDeveTotal))) +
   '</div>';
 
   // 5. TABLA DE PROGRAMACIÓN MENSUAL (EDITABLE)
