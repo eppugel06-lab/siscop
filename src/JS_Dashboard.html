@@ -176,12 +176,12 @@ function renderDashMetaTable(){
     var badges = getOrdenadosBadges(m); 
 
     return '<tr onclick="selectMeta(\''+sfSafe+'\')" style="cursor:pointer">'+
-      '<td class="code">'+sfSafe+'</td>'+
-      '<td class="den-cell" title="'+denSafe+'">'+denSafe+'</td>'+
-      '<td class="num hide-on-pia">'+fmtS(m.pim)+'</td>'+
-      '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct">'+m.pctCert+'%</div></div></td>'+
-      '<td class="num hide-on-pia"><div class="prog-row"><div class="prog-track"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct">'+m.pctDeve+'%</div></div></td>'+
-      '<td>'+badges+'</td>'+
+      '<td class="code" style="font-weight:700; color:var(--brand)">'+sfSafe+'</td>'+
+      '<td class="den-cell" title="'+denSafe+'" style="font-weight:500">'+denSafe+'</td>'+
+      '<td class="num hide-on-pia" style="text-align:right; font-weight:700">'+fmtS(m.pim)+'</td>'+
+      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-blue" style="width:'+Math.min(m.pctCert,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctCert+'%</div></div></td>'+
+      '<td class="num hide-on-pia"><div class="prog-row" style="margin:0; justify-content:flex-end"><div class="prog-track" style="width:60px; margin:0 12px 0 0"><div class="prog-fill fill-amber" style="width:'+Math.min(m.pctDeve,100)+'%"></div></div><div class="prog-pct" style="min-width:40px">'+m.pctDeve+'%</div></div></td>'+
+      '<td style="text-align:right">'+badges+'</td>'+
     '</tr>';
   }).join('');
 
@@ -216,11 +216,11 @@ function renderDashMetaTable(){
     pgHtml+='<button class="pg-btn" '+(page<=1?'disabled':'')+' onclick="goDashPage('+(page-1)+')">‹</button>';
     for(var p=1;p<=totalPages;p++){
       if(p===1||p===totalPages||Math.abs(p-page)<=1) pgHtml+='<button class="pg-btn '+(p===page?'active':'')+'" onclick="goDashPage('+p+')">'+p+'</button>';
-      else if(Math.abs(p-page)===2) pgHtml+='<span class="pg-info">…</span>';
+      else if(Math.abs(p-page)===2) pgHtml+='<span class="pg-info" style="padding:0">…</span>';
     }
     pgHtml+='<button class="pg-btn" '+(page>=totalPages?'disabled':'')+' onclick="goDashPage('+(page+1)+')">›</button>';
-    pgHtml+='<span class="pg-info">'+total+' total</span>';
   }
+  if (total > 0) pgHtml += '<span class="pg-info">'+total+' registros</span>';
   $('dash-meta-pagination').innerHTML=pgHtml;
 }
 

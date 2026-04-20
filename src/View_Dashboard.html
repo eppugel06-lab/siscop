@@ -51,29 +51,36 @@
           Ejecución Global
         </div>
         
-        <div class="rings-container" style="position:relative; width:180px; height:180px;">
-          <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width:100%; height:100%;">
-            <!-- Ring PIM (Outer - Static Reference) -->
-            <circle cx="50" cy="50" r="44" stroke="var(--ring-pim-bg)" stroke-width="8" fill="none" />
-            
-            <!-- Ring Certificado (Middle) -->
-            <circle cx="50" cy="50" r="35" stroke="var(--ring-cert-bg)" stroke-width="8" fill="none" />
-            <circle id="ring-cert-fill" cx="50" cy="50" r="35" stroke="var(--ring-cert)" stroke-width="8" fill="none" stroke-dasharray="219.9" stroke-dashoffset="219.9" stroke-linecap="round" style="transition: stroke-dashoffset 1.5s var(--spring)" />
+        <div style="position:relative; width:160px; height:160px; margin:0 auto">
+          <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width:100%; height:100%">
+            <!-- Ring Certificado (Outer) -->
+            <circle cx="50" cy="50" r="35" fill="none" stroke="var(--ring-cert-bg)" stroke-width="8" />
+            <circle id="ring-cert-fill" cx="50" cy="50" r="35" fill="none" stroke="var(--ring-cert)" stroke-width="8" 
+                    stroke-dasharray="219.9" stroke-dashoffset="219.9" stroke-linecap="round" 
+                    style="transition: stroke-dashoffset 1.5s var(--spring)" />
             
             <!-- Ring Devengado (Inner) -->
-            <circle cx="50" cy="50" r="26" stroke="var(--ring-deve-bg)" stroke-width="8" fill="none" />
-            <circle id="ring-deve-fill" cx="50" cy="50" r="26" stroke="var(--ring-deve)" stroke-width="8" fill="none" stroke-dasharray="163.3" stroke-dashoffset="163.3" stroke-linecap="round" style="transition: stroke-dashoffset 1.5s var(--spring)" />
+            <circle cx="50" cy="50" r="26" fill="none" stroke="var(--ring-deve-bg)" stroke-width="8" />
+            <circle id="ring-deve-fill" cx="50" cy="50" r="26" fill="none" stroke="var(--ring-deve)" stroke-width="8" 
+                    stroke-dasharray="163.3" stroke-dashoffset="163.3" stroke-linecap="round"
+                    style="transition: stroke-dashoffset 1.5s var(--spring)" />
           </svg>
-          
-          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center;">
-            <div id="ring-pct-main" style="font-size:1.4rem; font-weight:800; color:var(--text1)">0%</div>
-            <div style="font-size:0.55rem; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em">Devengado</div>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center">
+            <span id="ring-pct-main" style="font-size:1.8rem; font-weight:800; color:var(--text); letter-spacing:-0.05em; line-height:1">0%</span>
+            <span style="font-size:0.55rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; margin-top:4px">Ejecución</span>
           </div>
         </div>
-
-        <div style="display:flex; gap:16px; margin-top:20px; font-size:0.65rem; font-weight:600;">
-          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ring-cert)"></span> Certificado</div>
-          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ring-deve)"></span> Devengado</div>
+        
+        <!-- Legend: Dots refined -->
+        <div style="display:flex; justify-content:center; gap:16px; margin-top:20px">
+          <div style="display:flex; align-items:center; gap:6px">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--ring-cert)"></div>
+            <span style="font-size:0.65rem; font-weight:700; color:var(--text2)">Certificado</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--ring-deve)"></div>
+            <span style="font-size:0.65rem; font-weight:700; color:var(--text2)">Devengado</span>
+          </div>
         </div>
       </div>
 
@@ -89,18 +96,21 @@
       </div>
 
       <!-- Filtros Interactivos (Bento 4x1) -->
-      <div class="bento-item bento-4x1" style="flex-direction:row; justify-content:space-between; align-items:center; padding:16px 24px">
-        <div style="display:flex; align-items:center; gap:12px">
-          <span class="card-title" style="font-size: 0.9rem; font-weight:700; margin:0">Filtros de Estado</span>
-          <div class="filter-bar" style="margin:0; background:transparent; border:none; padding:0">
-            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok"><span id="res-ok-count">0</span> Ok</button>
-            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs"><span id="res-obs-count">0</span> Obs</button>
-            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add"><span id="res-add-count">0</span> Add</button>
-            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del"><span id="res-del-count">0</span> Del</button>
+      <div class="bento-item bento-4x1" style="flex-direction:row; justify-content:space-between; align-items:center; padding:12px 24px; min-height:80px">
+        <div style="display:flex; align-items:center; gap:20px">
+          <div style="display:flex; flex-direction:column">
+            <span style="font-size: 0.6rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em">Filtros Rápidos</span>
+            <span style="font-size: 1rem; font-weight:700; color:var(--text); letter-spacing:-0.02em">Estado Global</span>
+          </div>
+          <div class="filter-bar" style="margin:0; background:var(--surface2); border:none; padding:4px; border-radius:12px; display:flex; gap:2px">
+            <button class="chip-btn ok" onclick="toggleFiltro('ok')" id="chip-ok" style="border-radius:8px"><span id="res-ok-count" style="margin-right:4px">0</span> OK</button>
+            <button class="chip-btn obs" onclick="toggleFiltro('obs')" id="chip-obs" style="border-radius:8px"><span id="res-obs-count" style="margin-right:4px">0</span> OBS</button>
+            <button class="chip-btn add" onclick="toggleFiltro('add')" id="chip-add" style="border-radius:8px"><span id="res-add-count" style="margin-right:4px">0</span> ADD</button>
+            <button class="chip-btn del" onclick="toggleFiltro('del')" id="chip-del" style="border-radius:8px"><span id="res-del-count" style="margin-right:4px">0</span> DEL</button>
           </div>
         </div>
-        <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 12px; border-radius:16px">
-          Limpiar Selección
+        <button class="btn-clear-filter" id="btn-clear-filter" onclick="toggleFiltro('ALL')" style="display:none; height:32px; padding:0 16px; border-radius:16px; font-weight:700; background:var(--brand-soft); color:var(--brand); border:none">
+          Ver Todo
         </button>
       </div>
 
