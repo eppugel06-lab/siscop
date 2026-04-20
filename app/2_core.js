@@ -11,20 +11,45 @@ function _CORE_IMPORTAR_SISPLAN(ss) {
   });
   var datosO=hO.getRange(CONFIG.filasEnc.sisplan+1,1,hO.getLastRow(),hO.getLastColumn()).getValues();
   if(!datosO||datosO.length===0) return;
-  var numCols=encD.length, matriz=[];
+  var numCols=encD.length, matrizMap={};
+  var idxUM = encD.indexOf('UNIDAD_MEDIDA'); // Para preservar UM en la fusión
+  
   datosO.forEach(function(fila){
     if(fila.every(function(v){return v===''||v==null;})) return;
-    var filaD=new Array(numCols).fill('');
-    Object.keys(mapCol).forEach(function(col){
-      var val=fila[mapCol[col].o];
-      if(col==='SEC_FUNC'){val=String(val||'').trim().replace(/^0+/,'')||'0';val=val.padStart(4,'0');}
-      else if(col==='CLASIFICADOR_CODIGO'){val=String(val||'').replace(/\s+/g,'');}
-      else if(CONFIG.mesesCants.indexOf(col)!==-1){val=(val===''||val==null)?0:Number(val)||0;}
-      else if(typeof val==='string'){val=val.trim();}
-      filaD[mapCol[col].d]=val;
-    });
-    matriz.push(filaD);
+    var sfRaw = fila[mapCol['SEC_FUNC'].o];
+    var sf = _normSF(sfRaw);
+    var cl = String(fila[mapCol['CLASIFICADOR_CODIGO'].o]||'').replace(/\s+/g,'');
+    
+    var key = sf + '|' + cl;
+    
+    if (!matrizMap[key]) {
+      var filaD = new Array(numCols).fill('');
+      Object.keys(mapCol).forEach(function(col){
+        var val = fila[mapCol[col].o];
+        if(col==='SEC_FUNC') val = sf;
+        else if(col==='CLASIFICADOR_CODIGO') val = cl;
+        else if(CONFIG.mesesCants.indexOf(col)!==-1) val = _n(val);
+        else if(typeof val==='string') val = val.trim();
+        filaD[mapCol[col].d] = val;
+      });
+      matrizMap[key] = filaD;
+    } else {
+      // Fusión: Sumar meses si el registro ya existe (Caso Meta 48 aliased)
+      CONFIG.mesesCants.forEach(function(col){
+        var idx = mapCol[col].d;
+        matrizMap[key][idx] = _n(matrizMap[key][idx]) + _n(fila[mapCol[col].o]);
+      });
+      // Recalcular TOTAL_FISICO si existe
+      var idxTot = encD.indexOf('TOTAL_FISICO');
+      if (idxTot >= 0) {
+        var suma = 0;
+        CONFIG.mesesCants.forEach(function(mCol){ suma += _n(matrizMap[key][mapCol[mCol].d]); });
+        matrizMap[key][idxTot] = suma;
+      }
+    }
   });
+
+  var matriz = Object.keys(matrizMap).sort().map(function(k){ return matrizMap[k]; });
   var ini=CONFIG.filasEnc.consolidado+1, ult=hD.getLastRow();
   if(ult>=ini) hD.getRange(ini,1,ult-ini+1,hD.getLastColumn()).clearContent();
   if(matriz.length>0){
@@ -60,22 +85,24 @@ function _CORE_IMPORTAR_DEVENGADO(ss) {
     var f = datosO[i];
     if (String(f[d.ue]).trim() !== CONFIG.filtroUE) continue;
     
-    var sf = String(parseInt(Number(f[d.sf]), 10) || 0).padStart(4, '0');
+    var sf = _normSF(f[d.sf]);
     var cl = String(f[d.cl]).replace(/\s+/g, '');
     var act = String(f[d.act] || ''), umR = String(f[d.um] || ''), det = String(f[d.cld] || '');
     
     var pia=_n(f[d.pia]);
     var pim=_n(f[d.pim]);
     
+    var key = sf + '|' + cl;
+    
     // 2. LIMPIEZA: Ya no sumamos los "cants" en base al Devengado. Inicializamos en 0.
-    if (!devMap[sf + '|' + cl]) devMap[sf + '|' + cl] = { 
+    if (!devMap[key]) devMap[key] = { 
       denom: act.indexOf('.') >= 0 ? act.substring(act.indexOf('.') + 1).trim() : act.trim(),
       um: umR.indexOf('.') >= 0 ? umR.substring(umR.indexOf('.') + 1).trim() : umR.trim(),
       rec: det.indexOf(' ') >= 0 ? det.substring(det.indexOf(' ') + 1).trim() : det.trim(),
       pia: 0, pim: 0
     };
-    devMap[sf + '|' + cl].pia += pia;
-    devMap[sf + '|' + cl].pim += pim;
+    devMap[key].pia += pia;
+    devMap[key].pim += pim;
   }
   
   var estadosCols = [], obsCols = [], clavesExist = {};
