@@ -6051,7 +6051,7 @@ function renderMetaTable(){
       '<td class="code" style="color:var(--text3)">'+(start+i+1)+'</td>'+
       '<td class="code">'+c.clasificador+'</td>'+
       '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.recurso+'</td>'+
-      '<td class="num hide-on-pia">'+fmtS(c.pim)+'</td>'+
+      '<td class="num">'+fmtS(c.pim)+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(c.ejeCertTotal)+'</td>'+
       '<td class="num hide-on-pia">'+fmtS(c.ejeDeveTotal)+'</td>'+
       '<td class="num show-on-pia" style="display:none">'+fmtS(c.pia)+'</td>'+
@@ -6062,14 +6062,19 @@ function renderMetaTable(){
   $('meta-cards-mobile').innerHTML=slice.map(function(c,i){
     var pC=c.pim>0?(c.ejeCertTotal/c.pim*100):0;
     var pD=c.pim>0?(c.ejeDeveTotal/c.pim*100):0;
+    var isFuturo = document.body.classList.contains('is-pia');
+
     return '<div class="meta-card-mobile" onclick="selectClasif(\''+c.clasificador+'\')">'+
       '<div class="mc-header"><span class="mc-code">'+(start+i+1)+'. '+c.clasificador+'</span>'+fmtBadge(c.estado)+'</div>'+
       '<div class="mc-den">'+c.recurso+'</div>'+
-      '<div class="mc-bars">'+
+      '<div class="mc-bars hide-on-pia">'+
         '<div class="mc-row"><span class="mc-label">Cert.</span><div class="mc-track"><div class="mc-fill" style="width:'+Math.min(pC,100)+'%;background:var(--ok)"></div></div><span class="mc-pct" style="color:var(--ok)">'+pC.toFixed(1)+'%</span></div>'+
         '<div class="mc-row"><span class="mc-label">Deve.</span><div class="mc-track"><div class="mc-fill" style="width:'+Math.min(pD,100)+'%;background:var(--accent)"></div></div><span class="mc-pct" style="color:var(--accent)">'+pD.toFixed(1)+'%</span></div>'+
       '</div>'+
-      '<div style="font-size:.72rem;color:var(--text3);font-family:var(--mono)">PIM: '+fmtS(c.pim)+'</div>'+
+      '<div style="font-size:.72rem;color:var(--text3);font-family:var(--mono);display:flex;gap:12px">'+
+        '<span>PIM: '+fmtS(c.pim)+'</span>' +
+        (isFuturo ? '<span>PIA: '+fmtS(c.pia)+'</span>' : '') +
+      '</div>'+
     '</div>';
   }).join('');
 
